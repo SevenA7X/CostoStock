@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cl.duoc.costostock.model.CategoriaProducto
 import cl.duoc.costostock.viewmodel.CatalogoViewModel
+import androidx.compose.animation.AnimatedVisibility
 
 // Esta pantalla muestra la información completa de un producto específico.
 // Recibe el ViewModel y el ID del lote que el usuario seleccionó en el catálogo.
@@ -108,21 +109,24 @@ fun DetalleOfertaScreen(viewModel: CatalogoViewModel, idLoteSeleccionado: Long) 
         Text(text = "Impacto ambiental: Evitas ${lote.kgCo2EvitadoPorUnidad} kg de CO2")
         Text(text = "Horario de retiro: ${lote.horarioRetiro}")
 
-        // 6. Validación de categoría: Muestra advertencia si es bebida alcohólica.
-        if (lote.categoria == CategoriaProducto.BEBIDAS_ALCOHOLICAS) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Warning,
-                    contentDescription = "Advertencia de Edad",
-                    tint = MaterialTheme.colorScheme.error
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Producto exclusivo para mayores de 18 años.",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+
+        // 6. Validación de categoría con animación (AnimatedVisibility)
+        AnimatedVisibility(visible = lote.categoria == CategoriaProducto.BEBIDAS_ALCOHOLICAS) {
+            Column {
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Advertencia de Edad",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Producto exclusivo para mayores de 18 años.",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
         }
 
