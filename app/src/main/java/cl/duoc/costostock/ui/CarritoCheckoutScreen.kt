@@ -40,8 +40,8 @@ fun CarritoCheckoutScreen(
     var procesandoPago by remember { mutableStateOf(false) }
     var pagoCompletado by remember { mutableStateOf(false) }
 
-    val subtotal = state.reserva?.total ?: 0
-    val comisionServicio = (subtotal * 0.05).toInt() // 5% de comisión transparente
+    val subtotal = state.subtotalProductos
+    val comisionServicio = (subtotal * 0.05).toInt() // 5% transparente
     val totalPagar = subtotal + comisionServicio
 
     val minutos = state.tiempoRestanteSegundos / 60
@@ -77,7 +77,7 @@ fun CarritoCheckoutScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = if (state.reservaExpirada) "¡Tiempo de reserva agotado!" else "Tiempo restante de reserva:",
+                        text = if (state.reservaExpirada) "¡Tiempo de reserva agotado!" else "Tiempo de reserva bloqueado:",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
@@ -98,16 +98,14 @@ fun CarritoCheckoutScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text("Resumen de Compra", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Divider()
+                    HorizontalDivider()
 
-                    state.reserva?.items?.forEach { item ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("${item.nombreProducto} x${item.cantidad}")
-                            Text("$${item.subtotal}")
-                        }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Reserva ID")
+                        Text(state.idReserva, fontWeight = FontWeight.SemiBold)
                     }
 
                     Row(
@@ -126,7 +124,7 @@ fun CarritoCheckoutScreen(
                         Text("$${comisionServicio}", color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.SemiBold)
                     }
 
-                    Divider()
+                    HorizontalDivider()
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -138,10 +136,10 @@ fun CarritoCheckoutScreen(
                 }
             }
 
-            Text("Datos del Comprador", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("Datos del Comprador Ligero", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
             OutlinedTextField(
-                value = state.comprador.nombre,
+                value = state.compradorNombre,
                 onValueChange = { viewModel.onNombreChanged(it) },
                 label = { Text("Nombre Completo") },
                 isError = state.errorNombre != null,
@@ -149,7 +147,7 @@ fun CarritoCheckoutScreen(
                     state.errorNombre?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 },
                 trailingIcon = {
-                    val icono = if (state.errorNombre == null && state.comprador.nombre.isNotEmpty()) "✓" else "👤"
+                    val icono = if (state.errorNombre == null && state.compradorNombre.isNotEmpty()) "✓" else "👤"
                     Text(icono, fontSize = 16.sp)
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -158,7 +156,7 @@ fun CarritoCheckoutScreen(
             )
 
             OutlinedTextField(
-                value = state.comprador.correo,
+                value = state.compradorCorreo,
                 onValueChange = { viewModel.onCorreoChanged(it) },
                 label = { Text("Correo Electrónico") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -167,7 +165,7 @@ fun CarritoCheckoutScreen(
                     state.errorCorreo?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 },
                 trailingIcon = {
-                    val icono = if (state.errorCorreo == null && state.comprador.correo.isNotEmpty()) "✓" else "✉"
+                    val icono = if (state.errorCorreo == null && state.compradorCorreo.isNotEmpty()) "✓" else "✉"
                     Text(icono, fontSize = 16.sp)
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -176,7 +174,7 @@ fun CarritoCheckoutScreen(
             )
 
             OutlinedTextField(
-                value = state.comprador.telefono,
+                value = state.compradorTelefono,
                 onValueChange = { viewModel.onTelefonoChanged(it) },
                 label = { Text("Teléfono de Contacto") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
@@ -185,7 +183,7 @@ fun CarritoCheckoutScreen(
                     state.errorTelefono?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 },
                 trailingIcon = {
-                    val icono = if (state.errorTelefono == null && state.comprador.telefono.isNotEmpty()) "✓" else "📞"
+                    val icono = if (state.errorTelefono == null && state.compradorTelefono.isNotEmpty()) "✓" else "📞"
                     Text(icono, fontSize = 16.sp)
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -197,7 +195,7 @@ fun CarritoCheckoutScreen(
 
             val colorBotonAnimado by animateColorAsState(
                 targetValue = when {
-                    pagoCompletado -> Color(0xFF2E7D32) // Verde éxito
+                    pagoCompletado -> Color(0xFF2E7D32)
                     procesandoPago -> MaterialTheme.colorScheme.secondary
                     else -> MaterialTheme.colorScheme.primary
                 },
@@ -208,10 +206,10 @@ fun CarritoCheckoutScreen(
                 onClick = {
                     coroutineScope.launch {
                         procesandoPago = true
-                        delay(2000L) // Simulación del procesamiento del pago
+                        delay(2000L)
                         procesandoPago = false
                         pagoCompletado = true
-                        Toast.makeText(contexto, "¡Pago simulado con éxito!", Toast.LENGTH_LONG).show()
+                        Toast.makeText(contexto, "¡Reserva y Pago exitoso!", Toast.LENGTH_LONG).show()
                         delay(1000L)
                         onPagoExitoso()
                     }
@@ -239,7 +237,7 @@ fun CarritoCheckoutScreen(
                     } else if (pagoCompletado) {
                         Text("¡Pago Exitoso! ✓", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     } else {
-                        Text("PAGAR SIMULACIÓN ($${totalPagar})", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text("PAGAR ($${totalPagar})", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -250,7 +248,7 @@ fun CarritoCheckoutScreen(
                 exit = fadeOut()
             ) {
                 Text(
-                    text = "La reserva ha expirado. Por favor reinicie su carrito de compras.",
+                    text = "La reserva ha expirado. Favor volver al catálogo.",
                     color = MaterialTheme.colorScheme.error,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()

@@ -9,39 +9,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class ItemReservaSemilla(
-    val id: String,
-    val nombreProducto: String,
-    val cantidad: Int,
-    val precioUnitario: Int
-) {
-    val subtotal: Int get() = cantidad * precioUnitario
-}
-
-data class ReservaCarritoSemilla(
-    val idReserva: String,
-    val items: List<ItemReservaSemilla>
-) {
-    val total: Int get() = items.sumOf { it.subtotal }
-}
-
-data class CompradorLigero(
-    val nombre: String = "",
-    val correo: String = "",
-    val telefono: String = ""
-)
-
 data class CarritoCheckoutUiState(
-    val reserva: ReservaCarritoSemilla? = null,
-    val comprador: CompradorLigero = CompradorLigero(),
-    val tiempoRestanteSegundos: Int = 600,
+    val idReserva: String = "RES-2026-9912",
+    val compradorNombre: String = "",
+    val compradorCorreo: String = "",
+    val compradorTelefono: String = "",
+    val subtotalProductos: Int = 42980,
+    val tiempoRestanteSegundos: Int = 600, // RF-12: 10 minutos
     val reservaExpirada: Boolean = false,
     val errorNombre: String? = null,
     val errorCorreo: String? = null,
     val errorTelefono: String? = null,
     val esFormularioValido: Boolean = false
 )
-
 
 class CarritoCheckoutViewModel : ViewModel() {
 
@@ -51,19 +31,7 @@ class CarritoCheckoutViewModel : ViewModel() {
     private var timerJob: Job? = null
 
     init {
-        cargarDatosSemillaReserva()
         iniciarTemporizadorReserva()
-    }
-
-    private fun cargarDatosSemillaReserva() {
-        val reservaSemilla = ReservaCarritoSemilla(
-            idReserva = "RES-2026-9912",
-            items = listOf(
-                ItemReservaSemilla("1", "Polera Algodón Premium", 2, 12990),
-                ItemReservaSemilla("2", "Jeans Denim Slim Fit", 1, 29990)
-            )
-        )
-        _uiState.value = _uiState.value.copy(reserva = reservaSemilla)
     }
 
     private fun iniciarTemporizadorReserva() {
@@ -87,9 +55,8 @@ class CarritoCheckoutViewModel : ViewModel() {
 
     fun onNombreChanged(nuevoNombre: String) {
         val error = validarNombre(nuevoNombre)
-        val nuevoComprador = _uiState.value.comprador.copy(nombre = nuevoNombre)
         _uiState.value = _uiState.value.copy(
-            comprador = nuevoComprador,
+            compradorNombre = nuevoNombre,
             errorNombre = error
         )
         validarFormulario()
@@ -97,9 +64,8 @@ class CarritoCheckoutViewModel : ViewModel() {
 
     fun onCorreoChanged(nuevoCorreo: String) {
         val error = validarCorreo(nuevoCorreo)
-        val nuevoComprador = _uiState.value.comprador.copy(correo = nuevoCorreo)
         _uiState.value = _uiState.value.copy(
-            comprador = nuevoComprador,
+            compradorCorreo = nuevoCorreo,
             errorCorreo = error
         )
         validarFormulario()
@@ -107,9 +73,8 @@ class CarritoCheckoutViewModel : ViewModel() {
 
     fun onTelefonoChanged(nuevoTelefono: String) {
         val error = validarTelefono(nuevoTelefono)
-        val nuevoComprador = _uiState.value.comprador.copy(telefono = nuevoTelefono)
         _uiState.value = _uiState.value.copy(
-            comprador = nuevoComprador,
+            compradorTelefono = nuevoTelefono,
             errorTelefono = error
         )
         validarFormulario()
@@ -123,7 +88,7 @@ class CarritoCheckoutViewModel : ViewModel() {
         val regexCorreo = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$".toRegex()
         return when {
             correo.trim().isEmpty() -> "El correo es obligatorio."
-            !correo.matches(regexCorreo) -> "Ingrese un formato de correo válido (ej. usuario@dominio.com)."
+            !correo.matches(regexCorreo) -> "Formato de correo inválido."
             else -> null
         }
     }
@@ -133,24 +98,20 @@ class CarritoCheckoutViewModel : ViewModel() {
         return when {
             telefono.trim().isEmpty() -> "El teléfono es obligatorio."
             !telefono.matches(soloNumeros) -> "El teléfono debe contener solo dígitos numéricos."
-            telefono.length < 8 -> "El teléfono debe tener al menos 8 dígitos."
+            telefono.length < 8 -> "Debe tener al menos 8 dígitos."
             else -> null
         }
     }
 
     private fun validarFormulario() {
         val state = _uiState.value
-        val esValido = state.errorNombre == null && state.nombreValidado(state.comprador.nombre) &&
-                state.errorCorreo == null && state.correoValidado(state.comprador.correo) &&
-                state.errorTelefono == null && state.telefonoValidado(state.comprador.telefono) &&
+        val esValido = state.errorNombre == null && state.compradorNombre.trim().isNotEmpty() &&
+                state.errorCorreo == null && validarCorreo(state.compradorCorreo) == null &&
+                state.errorTelefono == null && validarTelefono(state.compradorTelefono) == null &&
                 !state.reservaExpirada
 
         _uiState.value = _uiState.value.copy(esFormularioValido = esValido)
     }
-
-    private fun CarritoCheckoutUiState.nombreValidado(v: String) = v.trim().isNotEmpty()
-    private fun CarritoCheckoutUiState.correoValidado(v: String) = validarCorreo(v) == null
-    private fun CarritoCheckoutUiState.telefonoValidado(v: String) = validarTelefono(v) == null
 
     override fun onCleared() {
         super.onCleared()
