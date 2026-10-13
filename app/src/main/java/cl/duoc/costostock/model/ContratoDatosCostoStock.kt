@@ -4,7 +4,7 @@ package cl.duoc.costostock.model
 // A. ENUMERACIONES OFICIALES (DOMINIO DE DATOS)
 
 
-// RF-04 y RF-15: Categorías permitidas (Excluye estrictamente alimentos frescos)
+// Categorías permitidas
 enum class CategoriaProducto(val requiereVerificacionEdad: Boolean) {
     ABARROTES_ENVASADOS(false),
     CONGELADOS(false),
@@ -13,7 +13,7 @@ enum class CategoriaProducto(val requiereVerificacionEdad: Boolean) {
     BEBIDAS_ALCOHOLICAS(true)
 }
 
-// RF-10 y RF-11: Estados del ciclo de vida del lote
+//Estados del ciclo de vida del lote
 enum class EstadoLote {
     OFERTA_ACTIVA,
     PRECIO_NORMAL,
@@ -22,21 +22,21 @@ enum class EstadoLote {
     RETIRADO_MANUAL
 }
 
-// RF-08: Radios de filtrado GPS permitidos (5, 15 y 30 km)
+// Radios de filtrado GPS permitidos (5, 15 y 30 km)
 enum class RadioBusquedaKm(val kilometros: Int) {
     RADIO_5_KM(5),
     RADIO_15_KM(15),
     RADIO_30_KM(30)
 }
 
-// RF-14 y RF-16: Estados del Voucher QR de retiro (Pick-up)
+// Estados del Voucher QR de retiro (Pick-up)
 enum class EstadoVoucher {
     PAGADO_LISTO_RETIRO,
     ENTREGADO,
     EXPIRADO_CANCELADO
 }
 
-// RF-18: Tipos de alerta comercial Push
+//Tipos de alerta comercial Push
 enum class TipoNotificacionPush {
     OFERTA_CERCANA_GPS,
     CONTADOR_POR_VENCER
@@ -46,7 +46,7 @@ enum class TipoNotificacionPush {
 // B. MODELOS DE DATOS PUROS (CONTRATO ENTRE CAPAS)
 // ============================================================================
 
-// 1. Proveedor Formalizado (RF-03, RF-04, RF-07)
+// 1. Proveedor Formalizado
 data class Proveedor(
     val idProveedor: Long,
     val razonSocial: String,
@@ -60,7 +60,7 @@ data class Proveedor(
     val horarioAtencion: String
 )
 
-// 2. Lote / Oferta Publicada (RF-04, RF-05, RF-06, RF-08, RF-09, RF-10, RF-11)
+// 2. Lote / Oferta Publicada
 data class LoteOferta(
     val idLote: Long,
     val idProveedor: Long,
@@ -86,14 +86,14 @@ data class LoteOferta(
     val estadoActual: EstadoLote = EstadoLote.OFERTA_ACTIVA
 )
 
-// 3. Registro Ligero del Comprador en Checkout (RF-01, RF-02)
+// 3. Registro Ligero del Comprador
 data class CompradorLigero(
     val nombreCompleto: String,
     val correoElectronico: String,
     val telefonoContacto: String
 )
 
-// 4. Reserva Temporal en Carrito (RF-12)
+// 4. Reserva Temporal en Carrito
 data class ReservaCarrito(
     val idReserva: String,
     val idLote: Long,
@@ -112,7 +112,7 @@ data class ReservaCarrito(
     val timestampExpiracionMillis: Long
 )
 
-// 5. Voucher Digital de Retiro e Impacto (RF-13, RF-14, RF-15, RF-16, RF-17)
+// 5. Voucher Digital de Retiro e Impacto
 data class VoucherRetiro(
     val idVoucher: Long,
     val codigoOrdenQR: String,
@@ -136,7 +136,7 @@ data class VoucherRetiro(
     val fechaEntregaConfirmadaMillis: Long? = null
 )
 
-// 6. Métricas de Ventas e Impacto Ambiental (RF-07 y RF-17)
+// 6. Métricas de Ventas e Impacto Ambiental
 data class ResumenImpactoMetricas(
     val totalKgCo2Evitado: Double,
     val equivalenciaArbolesPlantados: Int,
@@ -144,7 +144,7 @@ data class ResumenImpactoMetricas(
     val montoLiquidoTotalAcumulado: Int = 0
 )
 
-// 7. Notificaciones Push Comerciales (RF-18)
+// 7. Notificaciones Push Comerciales
 data class AlertaNotificacion(
     val idNotificacion: Long,
     val idLoteAsociado: Long,
