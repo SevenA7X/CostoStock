@@ -67,4 +67,5 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     implementation("com.google.android.gms:play-services-location:21.2.0")
+    implementation("androidx.compose.material:material-icons-extended")
 }
