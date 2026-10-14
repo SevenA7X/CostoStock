@@ -52,7 +52,7 @@ fun CatalogoScreen(viewModel: CatalogoViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Transición animada exigida en la rúbrica (AnimatedContent)
+        // Transición animada (AnimatedContent)
         AnimatedContent(
             targetState = mostrarMapa,
             transitionSpec = {

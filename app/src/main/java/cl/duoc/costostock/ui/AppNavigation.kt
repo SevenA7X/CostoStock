@@ -13,11 +13,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+
 
 sealed class Screen(val route: String, val title: String, val icon: String) {
     object Ofertas : Screen("ofertas", "Ofertas", "🛒")
@@ -93,7 +95,9 @@ fun AppNavigation() {
             }
         ) {
             composable(Screen.Ofertas.route) {
-                CarritoCheckoutScreen()
+                CatalogoScreen(
+                    viewModel = viewModel()
+                )
             }
 
             composable(Screen.Mapa.route) {
