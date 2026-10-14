@@ -20,7 +20,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 
-
 sealed class Screen(val route: String, val title: String, val icon: String) {
     object Ofertas : Screen("ofertas", "Ofertas", "🛒")
     object Mapa : Screen("mapa", "Mapa", "📍")
@@ -53,10 +52,9 @@ fun AppNavigation() {
                             if (currentRoute != screen.route) {
                                 navController.navigate(screen.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                                        inclusive = false
                                     }
                                     launchSingleTop = true
-                                    restoreState = true
                                 }
                             }
                         }
@@ -64,8 +62,8 @@ fun AppNavigation() {
                 }
             }
         },
-        //BOTON FLOTANTE TEMPORAL PARA VISUALIZAR EL CHECKOUT
-                floatingActionButton = {
+        // BOTON FLOTANTE TEMPORAL PARA VISUALIZAR EL CHECKOUT
+        floatingActionButton = {
             FloatingActionButton(
                 onClick = { navController.navigate("checkout") }
             ) {
