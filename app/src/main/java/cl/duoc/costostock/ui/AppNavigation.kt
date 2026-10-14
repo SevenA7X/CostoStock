@@ -63,6 +63,14 @@ fun AppNavigation() {
                     )
                 }
             }
+        },
+        //BOTON FLOTANTE TEMPORAL PARA VISUALIZAR EL CHECKOUT
+                floatingActionButton = {
+            FloatingActionButton(
+                onClick = { navController.navigate("checkout") }
+            ) {
+                Text("Pagar")
+            }
         }
     ) { innerPadding ->
         NavHost(
@@ -94,6 +102,8 @@ fun AppNavigation() {
                 ) + fadeOut(animationSpec = tween(400))
             }
         ) {
+            // --- 1. DESTINOS PRINCIPALES (Barra Inferior) ---
+
             composable(Screen.Ofertas.route) {
                 CatalogoScreen(
                     viewModel = viewModel()
@@ -105,11 +115,40 @@ fun AppNavigation() {
             }
 
             composable(Screen.Vouchers.route) {
-                PantallaModuloPlaceholder("Módulo Mis Vouchers y Canjes (Próximamente)")
+                ValidarVoucherScreen(
+                    navController = navController,
+                    viewModel = viewModel()
+                )
             }
 
             composable(Screen.Impacto.route) {
                 PantallaModuloPlaceholder("Módulo Impacto Ambiental y Ahorro (Próximamente)")
+            }
+
+            // --- 2. DESTINOS SECUNDARIOS (Navegación por botones) ---
+
+            composable("checkout") {
+                CarritoCheckoutScreen(
+                    viewModel = viewModel()
+                )
+            }
+
+            composable("publicar_lote") {
+                PublicarLoteScreen(
+                    viewModel = viewModel(),
+                    navController = navController
+                )
+            }
+
+            composable("captura_foto") {
+                CapturaFotoLote(
+                    foto = null,
+                    error = null,
+                    onFotoCapturada = { nuevaFoto ->
+
+                    },
+                    modifier = Modifier
+                )
             }
         }
     }

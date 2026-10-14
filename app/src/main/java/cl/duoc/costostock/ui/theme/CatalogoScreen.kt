@@ -8,11 +8,14 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.CardDefaults.cardColors
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import cl.duoc.costostock.ui.theme.FondoTarjeta
 import cl.duoc.costostock.viewmodel.CatalogoViewModel
 
 @Composable
@@ -67,7 +70,10 @@ fun CatalogoScreen(viewModel: CatalogoViewModel) {
                 // Muestra la lista original
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(lotes) { lote ->
-                        Card(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                        Card(shape = RoundedCornerShape(16.dp),
+                            colors = cardColors(containerColor = FondoTarjeta),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(text = lote.nombreProducto, style = MaterialTheme.typography.titleMedium)
                                 Text(text = lote.nombreComercio, style = MaterialTheme.typography.bodyMedium)
