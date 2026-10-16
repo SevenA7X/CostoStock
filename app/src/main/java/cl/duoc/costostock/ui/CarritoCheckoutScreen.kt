@@ -23,6 +23,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import cl.duoc.costostock.model.AlertaNotificacion
+import cl.duoc.costostock.model.TipoNotificacionPush
+import cl.duoc.costostock.util.GestorNotificaciones
 import cl.duoc.costostock.viewmodel.CarritoCheckoutViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -36,6 +39,9 @@ fun CarritoCheckoutScreen(
     val state by viewModel.uiState.collectAsState()
     val contexto = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+
+    //Instancio el gestor de notificaciones aqui arriba
+    val gestorNotificaciones = remember { GestorNotificaciones(contexto) }
 
     var procesandoPago by remember { mutableStateOf(false) }
     var pagoCompletado by remember { mutableStateOf(false) }
@@ -210,6 +216,20 @@ fun CarritoCheckoutScreen(
                         procesandoPago = false
                         pagoCompletado = true
                         Toast.makeText(contexto, "¡Reserva y Pago exitoso!", Toast.LENGTH_LONG).show()
+
+                        // Armamos el objeto oficial del contrato
+                        val alertaOficial = AlertaNotificacion(
+                            idNotificacion = System.currentTimeMillis(),
+                            idLoteAsociado = 0L, // 0L por defecto o el ID del lote real si lo tienes en el state
+                            titulo = "¡Compra Exitosa en CostoStock!",
+                            mensaje = "Tu voucher está listo y ayudaste a reducir emisiones de CO2. 🌱",
+                            tipo = TipoNotificacionPush.OFERTA_CERCANA_GPS, // Usamos un enum oficial
+                            timestampEnvioMillis = System.currentTimeMillis()
+                        )
+
+                        // Disparamos la notificación pasando el objeto completo
+                        gestorNotificaciones.mostrarNotificacion(alertaOficial)
+
                         delay(1000L)
                         onPagoExitoso()
                     }
