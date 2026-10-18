@@ -77,22 +77,8 @@ fun AppNavigation() {
                 }
             }
         },
-        floatingActionButton = {
-            Column(horizontalAlignment = Alignment.End) {
-                FloatingActionButton(
-                    onClick = { navController.navigate("publicar_lote") },
-                    modifier = Modifier.padding(bottom = 8.dp)
-                ) {
-                    Text("Ir a Publicar", modifier = Modifier.padding(horizontal = 8.dp))
-                }
-                FloatingActionButton(
-                    onClick = { navController.navigate("validar_voucher") }
-                ) {
-                    Text("Ir a Validar", modifier = Modifier.padding(horizontal = 8.dp))
-                }
-            }
-        }
-    ) { innerPadding ->
+
+        ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = Screen.Ofertas.route,
@@ -120,7 +106,8 @@ fun AppNavigation() {
 
             composable(Screen.Vouchers.route) {
                 val vouchersViewModel: VouchersViewModel = viewModel(factory = viewModelFactory)
-                VouchersScreen(viewModel = vouchersViewModel)
+                // Se agregó navController aquí
+                VouchersScreen(viewModel = vouchersViewModel, navController = navController)
             }
 
             composable(Screen.Impacto.route) {
@@ -129,7 +116,7 @@ fun AppNavigation() {
             }
 
             composable("checkout") {
-                CarritoCheckoutScreen()
+                CarritoCheckoutScreen(viewModel = viewModel(), navController = navController)
             }
 
             composable("publicar_lote") {
@@ -148,7 +135,7 @@ fun AppNavigation() {
                 DetalleOfertaScreen(
                     viewModel = viewModel(),
                     idLoteSeleccionado = loteId,
-                    navController = navController // <-- Añade esta línea
+                    navController = navController
                 )
             }
         }

@@ -23,6 +23,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import cl.duoc.costostock.data.room.CostoStockDataBase
+import cl.duoc.costostock.data.room.VoucherEntity
 import cl.duoc.costostock.model.AlertaNotificacion
 import cl.duoc.costostock.model.TipoNotificacionPush
 import cl.duoc.costostock.util.GestorNotificaciones
@@ -34,6 +37,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun CarritoCheckoutScreen(
     viewModel: CarritoCheckoutViewModel = viewModel(),
+    navController: NavController,
     onPagoExitoso: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -42,6 +46,10 @@ fun CarritoCheckoutScreen(
 
     //Instancio el gestor de notificaciones aqui arriba
     val gestorNotificaciones = remember { GestorNotificaciones(contexto) }
+
+    // Instancia de la base de datos Room y su DAO
+    val db = remember { CostoStockDataBase.getDatabase(contexto) }
+    val voucherDao = remember { db.voucherDao() }
 
     var procesandoPago by remember { mutableStateOf(false) }
     var pagoCompletado by remember { mutableStateOf(false) }
@@ -205,7 +213,8 @@ fun CarritoCheckoutScreen(
                     procesandoPago -> MaterialTheme.colorScheme.secondary
                     else -> MaterialTheme.colorScheme.primary
                 },
-                animationSpec = tween(durationMillis = 500)
+                animationSpec = tween(durationMillis = 500),
+                label = "colorBotonPago"
             )
 
             Button(
@@ -215,6 +224,20 @@ fun CarritoCheckoutScreen(
                         delay(2000L)
                         procesandoPago = false
                         pagoCompletado = true
+
+                        // Creación e inserción del voucher en SQLite
+                        val nuevoVoucher = VoucherEntity(
+                            codigoOrdenQR = "QR-${System.currentTimeMillis()}",
+                            nombreProducto = "Pack de Productos CostoStock",
+                            nombreComercio = "Comercio Asociado",
+                            direccionExactaRetiro = "Dirección del local",
+                            horarioValidoRetiro = "Horario de retiro",
+                            estadoVoucher = "VÁLIDO",
+                            kgCo2Evitado = 0.5,
+                            fechaEmisionMillis = System.currentTimeMillis()
+                        )
+                        voucherDao.insertarVoucher(nuevoVoucher)
+
                         Toast.makeText(contexto, "¡Reserva y Pago exitoso!", Toast.LENGTH_LONG).show()
 
                         // Armamos el objeto oficial del contrato
@@ -232,6 +255,11 @@ fun CarritoCheckoutScreen(
 
                         delay(1000L)
                         onPagoExitoso()
+
+                        // LÍNEAS NUEVAS: Navegación a vouchers y limpieza de historial
+                        navController.navigate("vouchers") {
+                            popUpTo("ofertas") { inclusive = false }
+                        }
                     }
                 },
                 enabled = state.esFormularioValido && !state.reservaExpirada && !procesandoPago && !pagoCompletado,
