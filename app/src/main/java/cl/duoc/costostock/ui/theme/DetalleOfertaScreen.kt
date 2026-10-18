@@ -16,11 +16,12 @@ import androidx.compose.ui.unit.dp
 import cl.duoc.costostock.model.CategoriaProducto
 import cl.duoc.costostock.viewmodel.CatalogoViewModel
 import androidx.compose.animation.AnimatedVisibility
+import androidx.navigation.NavController
 
 // Esta pantalla muestra la información completa de un producto específico.
 // Recibe el ViewModel y el ID del lote que el usuario seleccionó en el catálogo.
 @Composable
-fun DetalleOfertaScreen(viewModel: CatalogoViewModel, idLoteSeleccionado: Long) {
+fun DetalleOfertaScreen(viewModel: CatalogoViewModel, idLoteSeleccionado: Long, navController: NavController) {
 
     // 1. Observamos la lista reactiva de lotes.
     val lotes by viewModel.lotesVisibles.collectAsState()
@@ -134,7 +135,7 @@ fun DetalleOfertaScreen(viewModel: CatalogoViewModel, idLoteSeleccionado: Long) 
 
         // 7. Botón de acción principal.
         Button(
-            onClick = { /* Lógica futura para reservar el producto en la base de datos */ },
+            onClick = { navController.navigate("checkout") },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),

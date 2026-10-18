@@ -17,9 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cl.duoc.costostock.ui.theme.FondoTarjeta
 import cl.duoc.costostock.viewmodel.CatalogoViewModel
+import androidx.navigation.NavController
+import androidx.compose.foundation.clickable
 
 @Composable
-fun CatalogoScreen(viewModel: CatalogoViewModel) {
+fun CatalogoScreen(viewModel: CatalogoViewModel, navController: NavController) {
     val lotes by viewModel.lotesVisibles.collectAsState()
     var permisosConcedidos by remember { mutableStateOf(false) }
 
@@ -70,13 +72,24 @@ fun CatalogoScreen(viewModel: CatalogoViewModel) {
                 // Muestra la lista original
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(lotes) { lote ->
-                        Card(shape = RoundedCornerShape(16.dp),
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
                             colors = cardColors(containerColor = FondoTarjeta),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                                .clickable { navController.navigate("detalle_oferta/${lote.idLote}") }
+                        ) {
                             Column(modifier = Modifier.padding(16.dp)) {
-                                Text(text = lote.nombreProducto, style = MaterialTheme.typography.titleMedium)
-                                Text(text = lote.nombreComercio, style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    text = lote.nombreProducto,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = lote.nombreComercio,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
                                 Text(
                                     text = "Precio Oferta: $${lote.precioOfertaFinal}",
                                     style = MaterialTheme.typography.bodyLarge,

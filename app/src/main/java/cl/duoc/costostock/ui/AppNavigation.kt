@@ -27,6 +27,8 @@ import cl.duoc.costostock.data.room.CostoStockDataBase
 import cl.duoc.costostock.viewmodel.ImpactoViewModel
 import cl.duoc.costostock.viewmodel.ModulosViewModelFactory
 import cl.duoc.costostock.viewmodel.VouchersViewModel
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 sealed class Screen(val route: String, val title: String, val icon: String) {
     object Ofertas : Screen("ofertas", "Ofertas", "🛒")
@@ -78,12 +80,6 @@ fun AppNavigation() {
         floatingActionButton = {
             Column(horizontalAlignment = Alignment.End) {
                 FloatingActionButton(
-                    onClick = { navController.navigate("checkout") },
-                    modifier = Modifier.padding(bottom = 8.dp)
-                ) {
-                    Text("Ir a Checkout", modifier = Modifier.padding(horizontal = 8.dp))
-                }
-                FloatingActionButton(
                     onClick = { navController.navigate("publicar_lote") },
                     modifier = Modifier.padding(bottom = 8.dp)
                 ) {
@@ -115,7 +111,7 @@ fun AppNavigation() {
             }
         ) {
             composable(Screen.Ofertas.route) {
-                CatalogoScreen(viewModel = viewModel())
+                CatalogoScreen(viewModel = viewModel(), navController=navController)
             }
 
             composable(Screen.Mapa.route) {
@@ -142,6 +138,18 @@ fun AppNavigation() {
 
             composable("validar_voucher") {
                 ValidarVoucherScreen(viewModel = viewModel(), navController = navController)
+            }
+            composable(
+                route = "detalle_oferta/{loteId}",
+                arguments = listOf(navArgument("loteId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val loteId = backStackEntry.arguments?.getLong("loteId") ?: 0L
+
+                DetalleOfertaScreen(
+                    viewModel = viewModel(),
+                    idLoteSeleccionado = loteId,
+                    navController = navController // <-- Añade esta línea
+                )
             }
         }
     }
