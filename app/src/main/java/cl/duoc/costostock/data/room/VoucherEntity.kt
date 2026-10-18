@@ -23,7 +23,7 @@ data class VoucherEntity (
     val horarioValidoRetiro: String,
     val estadoVoucher: String,
     val kgCo2Evitado: Double,
-    val fechaEmisionMillis: Long
+    val fechaEmisionMillis: Long,
 )
 
 @Entity(tableName = "impacto_metricas")
@@ -46,10 +46,10 @@ interface VoucherDao {
 @Dao
 interface ImpactoDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun actualizarMetricas(impacto: ImpactoDao)
+    suspend fun actualizarMetricas(impacto: ImpactoEntity)
 
     @Query("SELECT * FROM impacto_metricas WHERE idMetrica = 1")
-    fun obtenerMetricas(): Flow<ImpactoEntity>
+    fun obtenerMetricas(): Flow<ImpactoEntity?>
 }
 
 @Database(entities = [VoucherEntity::class, ImpactoEntity::class], version = 1, exportSchema = false)

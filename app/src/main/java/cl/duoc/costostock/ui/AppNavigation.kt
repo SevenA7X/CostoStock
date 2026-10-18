@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
@@ -15,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -38,7 +40,6 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val context = LocalContext.current
 
-    // Inicialización de Base de Datos y Factory para los ViewModels de Room
     val database = remember { CostoStockDataBase.getDatabase(context) }
     val viewModelFactory = remember { ModulosViewModelFactory(database.voucherDao(), database.impactoDao()) }
 
@@ -64,14 +65,34 @@ fun AppNavigation() {
                             if (currentRoute != screen.route) {
                                 navController.navigate(screen.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                                        inclusive = false
                                     }
                                     launchSingleTop = true
-                                    restoreState = true
                                 }
                             }
                         }
                     )
+                }
+            }
+        },
+        floatingActionButton = {
+            Column(horizontalAlignment = Alignment.End) {
+                FloatingActionButton(
+                    onClick = { navController.navigate("checkout") },
+                    modifier = Modifier.padding(bottom = 8.dp)
+                ) {
+                    Text("Ir a Checkout", modifier = Modifier.padding(horizontal = 8.dp))
+                }
+                FloatingActionButton(
+                    onClick = { navController.navigate("publicar_lote") },
+                    modifier = Modifier.padding(bottom = 8.dp)
+                ) {
+                    Text("Ir a Publicar", modifier = Modifier.padding(horizontal = 8.dp))
+                }
+                FloatingActionButton(
+                    onClick = { navController.navigate("validar_voucher") }
+                ) {
+                    Text("Ir a Validar", modifier = Modifier.padding(horizontal = 8.dp))
                 }
             }
         }
@@ -94,12 +115,11 @@ fun AppNavigation() {
             }
         ) {
             composable(Screen.Ofertas.route) {
-                // Código intacto de tus compañeros
-                CarritoCheckoutScreen()
+                CatalogoScreen(viewModel = viewModel())
             }
 
             composable(Screen.Mapa.route) {
-                PantallaModuloPlaceholder("Módulo Mapa y Geolocalización (Próximamente)")
+                MapaOfertasScreen(viewModel = viewModel())
             }
 
             composable(Screen.Vouchers.route) {
@@ -110,6 +130,18 @@ fun AppNavigation() {
             composable(Screen.Impacto.route) {
                 val impactoViewModel: ImpactoViewModel = viewModel(factory = viewModelFactory)
                 ImpactoScreen(viewModel = impactoViewModel)
+            }
+
+            composable("checkout") {
+                CarritoCheckoutScreen()
+            }
+
+            composable("publicar_lote") {
+                PublicarLoteScreen(viewModel = viewModel(), navController = navController)
+            }
+
+            composable("validar_voucher") {
+                ValidarVoucherScreen(viewModel = viewModel(), navController = navController)
             }
         }
     }
