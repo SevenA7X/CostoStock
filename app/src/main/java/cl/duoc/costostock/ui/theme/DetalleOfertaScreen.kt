@@ -23,14 +23,9 @@ import androidx.navigation.NavController
 @Composable
 fun DetalleOfertaScreen(viewModel: CatalogoViewModel, idLoteSeleccionado: Long, navController: NavController) {
 
-    // 1. Observamos la lista reactiva de lotes.
+
     val lotes by viewModel.lotesVisibles.collectAsState()
-
-    // 2. Buscamos el lote específico que coincide con el ID seleccionado.
     val lote = lotes.find { it.idLote == idLoteSeleccionado }
-
-    // 3. Validación de seguridad: Si el producto caducó por el motor de tiempo
-    // y desapareció de la lista visible, mostramos un mensaje de error.
     if (lote == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(text = "La oferta ya no está disponible.")

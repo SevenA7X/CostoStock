@@ -51,7 +51,7 @@ fun CatalogoScreen(viewModel: CatalogoViewModel, navController: NavController) {
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate("publicar_lote") }, // Evento de navegación
+                onClick = { navController.navigate("publicar_lote") },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(

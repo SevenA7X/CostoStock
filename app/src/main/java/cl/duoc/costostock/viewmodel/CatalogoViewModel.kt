@@ -318,13 +318,13 @@ class CatalogoViewModel : ViewModel() {
         iniciarMotorActualizacion()
     }
 
-    // 3. Función para cambiar el radio desde la UI (RF-08)
+    // 3. Función para cambiar el radio desde la UI
     fun cambiarRadioBusqueda(nuevoRadio: RadioBusquedaKm) {
         _radioSeleccionado.value = nuevoRadio
         aplicarFiltros()
     }
 
-    // 4. Motor de validación de tiempo real (RF-10 y RF-11)
+    // 4. Motor de validación de tiempo real
     private fun iniciarMotorActualizacion() {
         viewModelScope.launch {
             while (true) {
