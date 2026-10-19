@@ -340,24 +340,54 @@ class CatalogoViewModel : ViewModel() {
         val lotesActualizados = lotesBase.map { lote ->
             var nuevoEstado = lote.estadoActual
 
-            // RF-11: Si superó la fecha de caducidad física, se bloquea y oculta
             if (tiempoActual >= lote.fechaCaducidadMillis) {
                 nuevoEstado = EstadoLote.CADUCADO_BLOQUEADO
-            }
-            // RF-10: Si superó el tiempo de la oferta, revierte a precio normal
-            else if (tiempoActual >= lote.fechaHoraFinOfertaMillis) {
+            } else if (tiempoActual >= lote.fechaHoraFinOfertaMillis) {
                 nuevoEstado = EstadoLote.PRECIO_NORMAL
             }
 
-            // Actualizamos el objeto con su estado verificado
             lote.copy(estadoActual = nuevoEstado)
         }.filter { lote ->
-            // Filtro visual: Solo mostrar si está activo o en precio normal, y con stock
-            (lote.estadoActual == EstadoLote.OFERTA_ACTIVA || lote.estadoActual == EstadoLote.PRECIO_NORMAL) &&
+            // Validación 1: Estado y Stock
+            val esVisiblePorEstado = (lote.estadoActual == EstadoLote.OFERTA_ACTIVA || lote.estadoActual == EstadoLote.PRECIO_NORMAL) &&
                     lote.stockUnidadesDisponible > 0
-            // Nota: El descarte de distancia por GPS lo integraremos en el Issue #3
+
+            // Validación 2: Distancia GPS (Issue 3)
+            val esVisiblePorDistancia = if (latitudUsuario != null && longitudUsuario != null) {
+                val distancia = calcularDistanciaKm(
+                    latitudUsuario!!, longitudUsuario!!,
+                    lote.latitudRetiro, lote.longitudRetiro
+                )
+                distancia <= _radioSeleccionado.value.kilometros
+            } else {
+                true // Si aún no hay GPS, mostramos todo por defecto
+            }
+
+            esVisiblePorEstado && esVisiblePorDistancia
         }
 
         _lotesVisibles.value = lotesActualizados
+    }
+    // Variables para almacenar la ubicación del teléfono
+    private var latitudUsuario: Double? = null
+    private var longitudUsuario: Double? = null
+
+    // Función que recibirá las coordenadas desde la UI
+    fun actualizarUbicacionUsuario(lat: Double, lon: Double) {
+        latitudUsuario = lat
+        longitudUsuario = lon
+        aplicarFiltros()
+    }
+
+    // Fórmula de Haversine para calcular distancia real en kilómetros
+    private fun calcularDistanciaKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val radioTierra = 6371.0
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = kotlin.math.sin(dLat / 2) * kotlin.math.sin(dLat / 2) +
+                kotlin.math.cos(Math.toRadians(lat1)) * kotlin.math.cos(Math.toRadians(lat2)) *
+                kotlin.math.sin(dLon / 2) * kotlin.math.sin(dLon / 2)
+        val c = 2 * kotlin.math.atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
+        return radioTierra * c
     }
 }

@@ -31,8 +31,20 @@ fun CatalogoScreen(viewModel: CatalogoViewModel, navController: NavController) {
     // Estado para controlar qué vista mostrar (Lista o Mapa)
     var mostrarMapa by remember { mutableStateOf(false) }
 
+    // Instancia del contexto y del gestor de ubicación
+    val contexto = androidx.compose.ui.platform.LocalContext.current
+    val gestorUbicacion = remember { cl.duoc.costostock.util.GestorUbicacion(contexto) }
+
     ManejadorPermisosGPS(
-        onPermisoConcedido = { permisosConcedidos = true },
+        onPermisoConcedido = {
+            permisosConcedidos = true
+            // Captura de coordenadas en tiempo real y envío al ViewModel
+            gestorUbicacion.obtenerUbicacionActual { location ->
+                location?.let {
+                    viewModel.actualizarUbicacionUsuario(it.latitude, it.longitude)
+                }
+            }
+        },
         onPermisoDenegado = { permisosConcedidos = false }
     )
 
