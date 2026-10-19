@@ -1,38 +1,84 @@
 package cl.duoc.costostock.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import cl.duoc.costostock.model.RadioBusquedaKm
 import cl.duoc.costostock.viewmodel.CatalogoViewModel
 
-// Esta pantalla representa la vista de mapa donde se ubican físicamente los lotes.
 @Composable
-fun MapaOfertasScreen(viewModel: CatalogoViewModel) {
+fun MapaOfertasScreen(viewModel: CatalogoViewModel, navController: NavController) {
 
-    // Obtenemos la lista reactiva de lotes directamente desde el ViewModel.
     val lotes by viewModel.lotesVisibles.collectAsState()
+    val radioSeleccionado by viewModel.radioSeleccionado.collectAsState()
+    var menuExpandido by remember { mutableStateOf(false) }
 
-    // Column principal que ocupa toda la pantalla.
     Column(modifier = Modifier.fillMaxSize()) {
 
+        // --- SECCIÓN NUEVA: Filtro de distancia ---
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Radio de búsqueda:",
+                style = MaterialTheme.typography.titleSmall
+            )
+
+            Box {
+                OutlinedButton(onClick = { menuExpandido = true }) {
+                    // Muestra el valor actual formateado (Ej: "RADIO 15 KM")
+                    Text(radioSeleccionado.name.replace("_", " "))
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Desplegar opciones"
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = menuExpandido,
+                    onDismissRequest = { menuExpandido = false }
+                ) {
+                    // Itera sobre las opciones del Enum
+                    RadioBusquedaKm.entries.forEach { radio ->
+                        DropdownMenuItem(
+                            text = { Text(radio.name.replace("_", " ")) },
+                            onClick = {
+                                viewModel.cambiarRadioBusqueda(radio)
+                                menuExpandido = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
         // --- SECCIÓN 1: Contenedor del Mapa (Marcador visual) ---
-        // Al no tener aún la API Key de Google Maps, usamos una caja (Box) que simula el área del mapa.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f) // weight(1f) hace que esta caja ocupe la mitad superior de la pantalla.
-                .background(Color(0xFFE0E0E0)), // Color gris claro para simular el fondo de un mapa.
+                .weight(1f)
+                .background(Color(0xFFE0E0E0)),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -56,20 +102,23 @@ fun MapaOfertasScreen(viewModel: CatalogoViewModel) {
         }
 
         // --- SECCIÓN 2: Lista inferior de ubicaciones ---
-        // Esta lista muestra las coordenadas y direcciones de los productos visibles.
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f) // Ocupa la otra mitad inferior de la pantalla.
+                .weight(1f)
                 .padding(16.dp)
         ) {
             items(lotes) { lote ->
-                Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clickable { navController.navigate("detalle_oferta/${lote.idLote}") }
+                ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Icono pequeño al lado de cada dirección
                         Icon(
                             imageVector = Icons.Default.LocationOn,
                             contentDescription = "Punto",
@@ -78,7 +127,6 @@ fun MapaOfertasScreen(viewModel: CatalogoViewModel) {
                         )
                         Spacer(modifier = Modifier.width(16.dp))
 
-                        // Textos con la dirección y el nombre del comercio
                         Column {
                             Text(text = lote.nombreComercio, style = MaterialTheme.typography.titleSmall)
                             Text(text = lote.direccionRetiro, style = MaterialTheme.typography.bodyMedium)

@@ -234,7 +234,9 @@ fun CarritoCheckoutScreen(
                             horarioValidoRetiro = "Horario de retiro",
                             estadoVoucher = "VÁLIDO",
                             kgCo2Evitado = 0.5,
-                            fechaEmisionMillis = System.currentTimeMillis()
+                            fechaEmisionMillis = System.currentTimeMillis(),
+                            nombreComprador = "Mario Quintero", // Simulación del nombre del usuario activo
+                            montoTotalPagado = 5000 // Simulación del total del carrito
                         )
                         voucherDao.insertarVoucher(nuevoVoucher)
 

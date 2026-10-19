@@ -24,6 +24,9 @@ data class VoucherEntity (
     val estadoVoucher: String,
     val kgCo2Evitado: Double,
     val fechaEmisionMillis: Long,
+    // --- CAMPOS NUEVOS AGREGADOS ---
+    val nombreComprador: String,
+    val montoTotalPagado: Int
 )
 
 @Entity(tableName = "impacto_metricas")
@@ -52,7 +55,8 @@ interface ImpactoDao {
     fun obtenerMetricas(): Flow<ImpactoEntity?>
 }
 
-@Database(entities = [VoucherEntity::class, ImpactoEntity::class], version = 1, exportSchema = false)
+// AUMENTADA LA VERSIÓN A 2
+@Database(entities = [VoucherEntity::class, ImpactoEntity::class], version = 2, exportSchema = false)
 abstract class CostoStockDataBase : RoomDatabase() {
     abstract fun voucherDao(): VoucherDao
     abstract fun impactoDao(): ImpactoDao
@@ -67,7 +71,10 @@ abstract class CostoStockDataBase : RoomDatabase() {
                     context.applicationContext,
                     CostoStockDataBase::class.java,
                     "costostock_db"
-                ).build().also { INSTANCE = it }
+                )
+                    // AÑADIDO PARA EVITAR CRASH AL AÑADIR NUEVAS COLUMNAS EN DESARROLLO
+                    .fallbackToDestructiveMigration()
+                    .build().also { INSTANCE = it }
             }
         }
     }

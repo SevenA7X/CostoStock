@@ -88,7 +88,7 @@ fun CatalogoScreen(viewModel: CatalogoViewModel, navController: NavController) {
             ) { isMap ->
                 if (isMap) {
                     // Muestra la pantalla del mapa
-                    MapaOfertasScreen(viewModel)
+                    MapaOfertasScreen(viewModel, navController)
                 } else {
                     // Muestra la lista original
                     LazyColumn(modifier = Modifier.fillMaxSize()) {

@@ -101,7 +101,7 @@ fun AppNavigation() {
             }
 
             composable(Screen.Mapa.route) {
-                MapaOfertasScreen(viewModel = viewModel())
+                MapaOfertasScreen(viewModel = viewModel(), navController = navController)
             }
 
             composable(Screen.Vouchers.route) {
