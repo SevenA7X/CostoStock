@@ -45,7 +45,8 @@ dependencies {
 
     implementation(libs.play.services.location)
 
-
+    //dependencia para agregar imagenes mediante URL
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
 
     // Room / SQLite para Persistencia Local

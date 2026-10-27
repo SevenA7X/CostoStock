@@ -52,36 +52,43 @@ fun AppNavigation() {
         Screen.Impacto
     )
 
+    // 1. Rastreo de la ruta actual para control de UI
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    // 2. Lógica para ocultar la barra inferior en Splash y Auth
+    val rutasSinBarraInferior = listOf("splash", "auth_menu")
+    val mostrarBarraInferior = currentRoute !in rutasSinBarraInferior
+
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
-
-                items.forEach { screen ->
-                    NavigationBarItem(
-                        icon = { Text(screen.icon) },
-                        label = { Text(screen.title) },
-                        selected = currentRoute == screen.route,
-                        onClick = {
-                            if (currentRoute != screen.route) {
-                                navController.navigate(screen.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        inclusive = false
+            // Solo dibuja la barra si la ruta actual no es el Splash ni el Menú de inicio
+            if (mostrarBarraInferior) {
+                NavigationBar {
+                    items.forEach { screen ->
+                        NavigationBarItem(
+                            icon = { Text(screen.icon) },
+                            label = { Text(screen.title) },
+                            selected = currentRoute == screen.route,
+                            onClick = {
+                                if (currentRoute != screen.route) {
+                                    navController.navigate(screen.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            inclusive = false
+                                        }
+                                        launchSingleTop = true
                                     }
-                                    launchSingleTop = true
                                 }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         },
-
-        ) { innerPadding ->
+    ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Ofertas.route,
+            startDestination = "splash", // 3. Se cambia el punto de partida
             modifier = Modifier.padding(innerPadding),
             enterTransition = {
                 slideIntoContainer(towards = AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(400)) + fadeIn(animationSpec = tween(400))
@@ -96,6 +103,23 @@ fun AppNavigation() {
                 slideOutOfContainer(towards = AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(400)) + fadeOut(animationSpec = tween(400))
             }
         ) {
+            composable(
+                route = "splash",
+                // El logo se desvanece suavemente al finalizar su tiempo
+                exitTransition = { fadeOut(animationSpec = tween(800)) }
+            ) {
+                SplashScreen(navController = navController)
+            }
+
+            composable(
+                route = "auth_menu",
+                // El menú emerge progresivamente desde la opacidad cero
+                enterTransition = { fadeIn(animationSpec = tween(800)) }
+            ) {
+                AuthMenuScreen(navController = navController)
+            }
+            // -------------------------------
+
             composable(Screen.Ofertas.route) {
                 CatalogoScreen(viewModel = viewModel(), navController=navController)
             }
@@ -106,7 +130,6 @@ fun AppNavigation() {
 
             composable(Screen.Vouchers.route) {
                 val vouchersViewModel: VouchersViewModel = viewModel(factory = viewModelFactory)
-                // Se agregó navController aquí
                 VouchersScreen(viewModel = vouchersViewModel, navController = navController)
             }
 
@@ -126,12 +149,12 @@ fun AppNavigation() {
             composable("validar_voucher") {
                 ValidarVoucherScreen(viewModel = viewModel(), navController = navController)
             }
+
             composable(
                 route = "detalle_oferta/{loteId}",
                 arguments = listOf(navArgument("loteId") { type = NavType.LongType })
             ) { backStackEntry ->
                 val loteId = backStackEntry.arguments?.getLong("loteId") ?: 0L
-
                 DetalleOfertaScreen(
                     viewModel = viewModel(),
                     idLoteSeleccionado = loteId,

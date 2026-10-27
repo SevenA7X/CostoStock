@@ -1,5 +1,7 @@
 package cl.duoc.costostock.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -10,22 +12,27 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import cl.duoc.costostock.model.CategoriaProducto
 import cl.duoc.costostock.viewmodel.CatalogoViewModel
-import androidx.compose.animation.AnimatedVisibility
-import androidx.navigation.NavController
+import coil.compose.AsyncImage
 
-// Esta pantalla muestra la información completa de un producto específico.
-// Recibe el ViewModel y el ID del lote que el usuario seleccionó en el catálogo.
 @Composable
 fun DetalleOfertaScreen(viewModel: CatalogoViewModel, idLoteSeleccionado: Long, navController: NavController) {
 
-
+    // 1. Observamos la lista reactiva de lotes.
     val lotes by viewModel.lotesVisibles.collectAsState()
+
+    // 2. Buscamos el lote específico que coincide con el ID seleccionado.
     val lote = lotes.find { it.idLote == idLoteSeleccionado }
+
+    // 3. Validación de seguridad.
     if (lote == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(text = "La oferta ya no está disponible.")
@@ -39,6 +46,21 @@ fun DetalleOfertaScreen(viewModel: CatalogoViewModel, idLoteSeleccionado: Long, 
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        // --- INICIO IMAGEN DESTACADA ---
+        AsyncImage(
+            model = lote.urlsFotografiasActuales.firstOrNull(),
+            contentDescription = "Fotografía de ${lote.nombreProducto}",
+            contentScale = ContentScale.Crop, // Ajuste perfecto sin deformar
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(250.dp) // Altura fija de cabecera
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color(0xFFEEEEEE))
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+        // --- FIN IMAGEN DESTACADA ---
+
         // Tarjeta principal con la cabecera de la información.
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -88,7 +110,8 @@ fun DetalleOfertaScreen(viewModel: CatalogoViewModel, idLoteSeleccionado: Long, 
                         Text(
                             text = "$${lote.precioNormalSinDescuento}",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = Color.Gray
+                            color = Color.Gray,
+                            textDecoration = TextDecoration.LineThrough // Tachado agregado
                         )
                     }
                 }
@@ -104,7 +127,6 @@ fun DetalleOfertaScreen(viewModel: CatalogoViewModel, idLoteSeleccionado: Long, 
         Text(text = "Stock disponible: ${lote.stockUnidadesDisponible} unidades")
         Text(text = "Impacto ambiental: Evitas ${lote.kgCo2EvitadoPorUnidad} kg de CO2")
         Text(text = "Horario de retiro: ${lote.horarioRetiro}")
-
 
         // 6. Validación de categoría con animación (AnimatedVisibility)
         AnimatedVisibility(visible = lote.categoria == CategoriaProducto.BEBIDAS_ALCOHOLICAS) {
