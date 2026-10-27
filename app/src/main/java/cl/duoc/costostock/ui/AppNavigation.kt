@@ -27,6 +27,7 @@ import cl.duoc.costostock.data.room.CostoStockDataBase
 import cl.duoc.costostock.viewmodel.ImpactoViewModel
 import cl.duoc.costostock.viewmodel.ModulosViewModelFactory
 import cl.duoc.costostock.viewmodel.VouchersViewModel
+import cl.duoc.costostock.viewmodel.AuthViewModel
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 
@@ -45,6 +46,9 @@ fun AppNavigation() {
     val database = remember { CostoStockDataBase.getDatabase(context) }
     val viewModelFactory = remember { ModulosViewModelFactory(database.voucherDao(), database.impactoDao()) }
 
+    // Instancia compartida del ViewModel de Autenticación
+    val authViewModel: AuthViewModel = viewModel()
+
     val items = listOf(
         Screen.Ofertas,
         Screen.Mapa,
@@ -52,17 +56,15 @@ fun AppNavigation() {
         Screen.Impacto
     )
 
-    // 1. Rastreo de la ruta actual para control de UI
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // 2. Lógica para ocultar la barra inferior en Splash y Auth
-    val rutasSinBarraInferior = listOf("splash", "auth_menu")
+    // Se añaden las rutas de inicio de sesión y registro para ocultar la barra inferior
+    val rutasSinBarraInferior = listOf("splash", "auth_menu", "iniciar_sesion", "registro")
     val mostrarBarraInferior = currentRoute !in rutasSinBarraInferior
 
     Scaffold(
         bottomBar = {
-            // Solo dibuja la barra si la ruta actual no es el Splash ni el Menú de inicio
             if (mostrarBarraInferior) {
                 NavigationBar {
                     items.forEach { screen ->
@@ -88,7 +90,7 @@ fun AppNavigation() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "splash", // 3. Se cambia el punto de partida
+            startDestination = "splash",
             modifier = Modifier.padding(innerPadding),
             enterTransition = {
                 slideIntoContainer(towards = AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(400)) + fadeIn(animationSpec = tween(400))
@@ -105,7 +107,6 @@ fun AppNavigation() {
         ) {
             composable(
                 route = "splash",
-                // El logo se desvanece suavemente al finalizar su tiempo
                 exitTransition = { fadeOut(animationSpec = tween(800)) }
             ) {
                 SplashScreen(navController = navController)
@@ -113,12 +114,20 @@ fun AppNavigation() {
 
             composable(
                 route = "auth_menu",
-                // El menú emerge progresivamente desde la opacidad cero
                 enterTransition = { fadeIn(animationSpec = tween(800)) }
             ) {
                 AuthMenuScreen(navController = navController)
             }
-            // -------------------------------
+
+            // --- Nuevas Rutas de Autenticación ---
+            composable("iniciar_sesion") {
+                LoginScreen(navController = navController, viewModel = authViewModel)
+            }
+
+            composable("registro") {
+                RegistroScreen(navController = navController, viewModel = authViewModel)
+            }
+            // -------------------------------------
 
             composable(Screen.Ofertas.route) {
                 CatalogoScreen(viewModel = viewModel(), navController=navController)
