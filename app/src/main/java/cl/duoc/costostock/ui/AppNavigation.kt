@@ -107,6 +107,7 @@ fun AppNavigation() {
             composable(Screen.Vouchers.route) {
                 val vouchersViewModel: VouchersViewModel = viewModel(factory = viewModelFactory)
                 // Se agregó navController aquí
+
                 VouchersScreen(viewModel = vouchersViewModel, navController = navController)
             }
 

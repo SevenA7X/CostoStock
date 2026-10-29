@@ -8,7 +8,6 @@ import cl.duoc.costostock.data.room.VoucherDao
 import cl.duoc.costostock.data.room.VoucherEntity
 import cl.duoc.costostock.model.CompradorLigero
 import cl.duoc.costostock.model.EstadoVoucher
-import cl.duoc.costostock.model.ResumenImpactoMetricas
 import cl.duoc.costostock.model.VoucherRetiro
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -57,19 +56,10 @@ class VouchersViewModel(private val voucherDao: VoucherDao) : ViewModel() {
     }
 }
 
-class ImpactoViewModel(private val impactoDao: ImpactoDao) : ViewModel() {
-    val metricas: StateFlow<ResumenImpactoMetricas?> = impactoDao.obtenerMetricas()
-        .map { entity ->
-            entity?.let {
-                ResumenImpactoMetricas(
-                    totalKgCo2Evitado = it.totalKgCo2Evitado,
-                    equivalenciaArbolesPlantados = it.equivalenciaArbolesPlantados,
-                    totalLotesVendidosOComprados = it.totalLotesVendidosOComprados,
-                    montoLiquidoTotalAcumulado = 0 // Parámetro del contrato
-                )
-            }
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+class ImpactoViewModel(voucherDao: VoucherDao) : ViewModel() {
+    val estado: StateFlow<ImpactoUiState> = voucherDao.obtenerTodosLosVouchers()
+        .map { vouchers -> calcularImpacto(vouchers) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ImpactoUiState())
 }
 
 class ModulosViewModelFactory(
@@ -83,7 +73,7 @@ class ModulosViewModelFactory(
         }
         if (modelClass.isAssignableFrom(ImpactoViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return ImpactoViewModel(impactoDao) as T
+            return ImpactoViewModel(voucherDao) as T
         }
         throw IllegalArgumentException("Clase ViewModel desconocida")
     }
