@@ -27,6 +27,7 @@ import cl.duoc.costostock.data.room.CostoStockDataBase
 import cl.duoc.costostock.viewmodel.ImpactoViewModel
 import cl.duoc.costostock.viewmodel.ModulosViewModelFactory
 import cl.duoc.costostock.viewmodel.VouchersViewModel
+import cl.duoc.costostock.viewmodel.AuthViewModel
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 
@@ -45,6 +46,9 @@ fun AppNavigation() {
     val database = remember { CostoStockDataBase.getDatabase(context) }
     val viewModelFactory = remember { ModulosViewModelFactory(database.voucherDao(), database.impactoDao()) }
 
+    // Instancia compartida del ViewModel de Autenticación
+    val authViewModel: AuthViewModel = viewModel()
+
     val items = listOf(
         Screen.Ofertas,
         Screen.Mapa,
@@ -52,36 +56,41 @@ fun AppNavigation() {
         Screen.Impacto
     )
 
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    // Se añaden las rutas de inicio de sesión y registro para ocultar la barra inferior
+    val rutasSinBarraInferior = listOf("splash", "auth_menu", "iniciar_sesion", "registro")
+    val mostrarBarraInferior = currentRoute !in rutasSinBarraInferior
+
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
-
-                items.forEach { screen ->
-                    NavigationBarItem(
-                        icon = { Text(screen.icon) },
-                        label = { Text(screen.title) },
-                        selected = currentRoute == screen.route,
-                        onClick = {
-                            if (currentRoute != screen.route) {
-                                navController.navigate(screen.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        inclusive = false
+            if (mostrarBarraInferior) {
+                NavigationBar {
+                    items.forEach { screen ->
+                        NavigationBarItem(
+                            icon = { Text(screen.icon) },
+                            label = { Text(screen.title) },
+                            selected = currentRoute == screen.route,
+                            onClick = {
+                                if (currentRoute != screen.route) {
+                                    navController.navigate(screen.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            inclusive = false
+                                        }
+                                        launchSingleTop = true
                                     }
-                                    launchSingleTop = true
                                 }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         },
-
-        ) { innerPadding ->
+    ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Ofertas.route,
+            startDestination = "splash",
             modifier = Modifier.padding(innerPadding),
             enterTransition = {
                 slideIntoContainer(towards = AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(400)) + fadeIn(animationSpec = tween(400))
@@ -96,6 +105,30 @@ fun AppNavigation() {
                 slideOutOfContainer(towards = AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(400)) + fadeOut(animationSpec = tween(400))
             }
         ) {
+            composable(
+                route = "splash",
+                exitTransition = { fadeOut(animationSpec = tween(800)) }
+            ) {
+                SplashScreen(navController = navController)
+            }
+
+            composable(
+                route = "auth_menu",
+                enterTransition = { fadeIn(animationSpec = tween(800)) }
+            ) {
+                AuthMenuScreen(navController = navController)
+            }
+
+            // --- Nuevas Rutas de Autenticación ---
+            composable("iniciar_sesion") {
+                LoginScreen(navController = navController, viewModel = authViewModel)
+            }
+
+            composable("registro") {
+                RegistroScreen(navController = navController, viewModel = authViewModel)
+            }
+            // -------------------------------------
+
             composable(Screen.Ofertas.route) {
                 CatalogoScreen(viewModel = viewModel(), navController=navController)
             }
@@ -106,8 +139,6 @@ fun AppNavigation() {
 
             composable(Screen.Vouchers.route) {
                 val vouchersViewModel: VouchersViewModel = viewModel(factory = viewModelFactory)
-                // Se agregó navController aquí
-
                 VouchersScreen(viewModel = vouchersViewModel, navController = navController)
             }
 
@@ -127,12 +158,12 @@ fun AppNavigation() {
             composable("validar_voucher") {
                 ValidarVoucherScreen(viewModel = viewModel(), navController = navController)
             }
+
             composable(
                 route = "detalle_oferta/{loteId}",
                 arguments = listOf(navArgument("loteId") { type = NavType.LongType })
             ) { backStackEntry ->
                 val loteId = backStackEntry.arguments?.getLong("loteId") ?: 0L
-
                 DetalleOfertaScreen(
                     viewModel = viewModel(),
                     idLoteSeleccionado = loteId,

@@ -15,13 +15,21 @@ import kotlinx.coroutines.flow.asStateFlow
 class CatalogoViewModel : ViewModel() {
 
     // 1. Estados que leerá la interfaz (UI)
-    private val _radioSeleccionado = MutableStateFlow(RadioBusquedaKm.RADIO_15_KM)
+    private val _radioSeleccionado = MutableStateFlow(RadioBusquedaKm.RADIO_30_KM)
     val radioSeleccionado: StateFlow<RadioBusquedaKm> = _radioSeleccionado.asStateFlow()
 
     private val _lotesVisibles = MutableStateFlow<List<LoteOferta>>(emptyList())
     val lotesVisibles: StateFlow<List<LoteOferta>> = _lotesVisibles.asStateFlow()
+    // Estado para el buscador de texto
+    private val _textoBusqueda = MutableStateFlow("")
+    val textoBusqueda: StateFlow<String> = _textoBusqueda.asStateFlow()
 
+    fun actualizarTextoBusqueda(nuevoTexto: String) {
+        _textoBusqueda.value = nuevoTexto
+        aplicarFiltros()
+    }
     // 2. Base de datos de prueba (Mock) ajustada a sus 5 categorías
+    // 2. Base de datos de prueba (Mock) con imágenes optimizadas para Coil
     private val lotesBase = listOf(
         LoteOferta(
             idLote = 1,
@@ -30,8 +38,8 @@ class CatalogoViewModel : ViewModel() {
             nombreProducto = "Pack Bebidas Energéticas (Cerca de vencer)",
             descripcion = "Latas con fecha corta, empaque sellado.",
             categoria = CategoriaProducto.ABARROTES_ENVASADOS,
-            urlsFotografiasActuales = emptyList(),
-            fechaCapturaFotoMillis = System.currentTimeMillis(),
+            urlsFotografiasActuales = listOf("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ9LNYvklGy--a9GVKPtk45yNlKH2G-Fpj8RYi59PV_P4g0OsVMN39M26iI&s=10"),
+            fechaCapturaFotoMillis = System.currentTimeMillis()- 172_800_000L,
             stockUnidadesDisponible = 10,
             montoLiquidoProveedor = 4000,
             comisionCostoStock = 400,
@@ -54,7 +62,7 @@ class CatalogoViewModel : ViewModel() {
             nombreProducto = "Cervezas Artesanales (Excedente)",
             descripcion = "Cambio de etiqueta de la marca.",
             categoria = CategoriaProducto.BEBIDAS_ALCOHOLICAS,
-            urlsFotografiasActuales = emptyList(),
+            urlsFotografiasActuales = listOf("https://http2.mlstatic.com/D_NQ_NP_734077-MLU78178247643_082024-O.webp"),
             fechaCapturaFotoMillis = System.currentTimeMillis(),
             stockUnidadesDisponible = 24,
             montoLiquidoProveedor = 10000,
@@ -78,8 +86,8 @@ class CatalogoViewModel : ViewModel() {
             nombreProducto = "Bolsa de Arvejas Congeladas 1kg",
             descripcion = "Empaque con daños menores, producto sellado.",
             categoria = CategoriaProducto.CONGELADOS,
-            urlsFotografiasActuales = emptyList(),
-            fechaCapturaFotoMillis = System.currentTimeMillis(),
+            urlsFotografiasActuales = listOf("https://dojiw2m9tvv09.cloudfront.net/85621/product/arvejas-minuto-verde-1-kg6400.jpg"),
+            fechaCapturaFotoMillis = System.currentTimeMillis()- 172_800_000L,
             stockUnidadesDisponible = 15,
             montoLiquidoProveedor = 1000,
             comisionCostoStock = 200,
@@ -102,7 +110,7 @@ class CatalogoViewModel : ViewModel() {
             nombreProducto = "Helado de Vainilla 2L (Envase dañado)",
             descripcion = "Tapa astillada, sello interior intacto.",
             categoria = CategoriaProducto.CONGELADOS,
-            urlsFotografiasActuales = emptyList(),
+            urlsFotografiasActuales = listOf("https://walmartcr.vtexassets.com/arquivos/ids/638954/7066_02.jpg?v=638568601439870000"),
             fechaCapturaFotoMillis = System.currentTimeMillis(),
             stockUnidadesDisponible = 8,
             montoLiquidoProveedor = 3000,
@@ -126,8 +134,8 @@ class CatalogoViewModel : ViewModel() {
             nombreProducto = "Caja de Ibuprofeno 400mg (Próximo a vencer)",
             descripcion = "Cajas con vencimiento en 2 meses.",
             categoria = CategoriaProducto.FARMACIA,
-            urlsFotografiasActuales = emptyList(),
-            fechaCapturaFotoMillis = System.currentTimeMillis(),
+            urlsFotografiasActuales = listOf("https://profar.cl/media/catalog/product/cache/0ef4825a2b8913160efbbb4d7e84ca00/1/0/102928_1_kngfzyopyljirsym.webp"),
+            fechaCapturaFotoMillis = System.currentTimeMillis()- 172_800_000L,
             stockUnidadesDisponible = 20,
             montoLiquidoProveedor = 1200,
             comisionCostoStock = 300,
@@ -150,7 +158,7 @@ class CatalogoViewModel : ViewModel() {
             nombreProducto = "Vitaminas C Efervescentes (Sobrestock)",
             descripcion = "Excedente de inventario temporada invierno.",
             categoria = CategoriaProducto.FARMACIA,
-            urlsFotografiasActuales = emptyList(),
+            urlsFotografiasActuales = listOf("https://www.mixgreen.cl/cdn/shop/files/13181a.jpg?height=533&v=1710258765"),
             fechaCapturaFotoMillis = System.currentTimeMillis(),
             stockUnidadesDisponible = 5,
             montoLiquidoProveedor = 4490,
@@ -174,8 +182,8 @@ class CatalogoViewModel : ViewModel() {
             nombreProducto = "Pack Ampolletas LED (Caja abierta)",
             descripcion = "Empaque dañado durante traslado.",
             categoria = CategoriaProducto.FERRETERIA,
-            urlsFotografiasActuales = emptyList(),
-            fechaCapturaFotoMillis = System.currentTimeMillis(),
+            urlsFotografiasActuales = listOf("https://cdnx.jumpseller.com/electra-s-a/image/71338375/resize/430/573?1767351708"),
+            fechaCapturaFotoMillis = System.currentTimeMillis()- 172_800_000L,
             stockUnidadesDisponible = 30,
             montoLiquidoProveedor = 700,
             comisionCostoStock = 100,
@@ -198,7 +206,7 @@ class CatalogoViewModel : ViewModel() {
             nombreProducto = "Pintura Blanca 1 Galón (Tarro abollado)",
             descripcion = "Lata con abolladuras, no afecta el contenido.",
             categoria = CategoriaProducto.FERRETERIA,
-            urlsFotografiasActuales = emptyList(),
+            urlsFotografiasActuales = listOf("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSE2rMtWYwT0O9eQs1q-eoH4Yaly3Lf4L59OiSS-Xtktw&s=10"),
             fechaCapturaFotoMillis = System.currentTimeMillis(),
             stockUnidadesDisponible = 2,
             montoLiquidoProveedor = 6500,
@@ -222,8 +230,8 @@ class CatalogoViewModel : ViewModel() {
             nombreProducto = "Hamburguesas de Vacuno Congeladas",
             descripcion = "Lote próximo a fecha de consumo preferente.",
             categoria = CategoriaProducto.CONGELADOS,
-            urlsFotografiasActuales = emptyList(),
-            fechaCapturaFotoMillis = System.currentTimeMillis(),
+            urlsFotografiasActuales = listOf("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRFwovpQ_fSryoz4ChkHE_5G9dTbAO1SXR092Fer-gMXA&s=10"),
+            fechaCapturaFotoMillis = System.currentTimeMillis()- 172_800_000L,
             stockUnidadesDisponible = 12,
             montoLiquidoProveedor = 2800,
             comisionCostoStock = 400,
@@ -246,7 +254,7 @@ class CatalogoViewModel : ViewModel() {
             nombreProducto = "Pack Vienesas Envasadas 1kg",
             descripcion = "Sobrestock en abarrotes refrigerados.",
             categoria = CategoriaProducto.ABARROTES_ENVASADOS,
-            urlsFotografiasActuales = emptyList(),
+            urlsFotografiasActuales = listOf("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDdOpgktVZoZgnx1KMxexRNjPnbvBec7-5BrtoVYGHKrLjy9jwx6foRNM&s=10"),
             fechaCapturaFotoMillis = System.currentTimeMillis(),
             stockUnidadesDisponible = 18,
             montoLiquidoProveedor = 2400,
@@ -270,8 +278,8 @@ class CatalogoViewModel : ViewModel() {
             nombreProducto = "Fideos Espagueti 400g (Caja abollada)",
             descripcion = "Empaque secundario dañado, producto sellado.",
             categoria = CategoriaProducto.ABARROTES_ENVASADOS,
-            urlsFotografiasActuales = emptyList(),
-            fechaCapturaFotoMillis = System.currentTimeMillis(),
+            urlsFotografiasActuales = listOf("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQo2JAyz7ZBlQBGY2N0igR7ZeTd2r-fxAX47-4skZTSCw&s=10"),
+            fechaCapturaFotoMillis = System.currentTimeMillis()- 172_800_000L,
             stockUnidadesDisponible = 50,
             montoLiquidoProveedor = 400,
             comisionCostoStock = 100,
@@ -294,7 +302,7 @@ class CatalogoViewModel : ViewModel() {
             nombreProducto = "Salsa de Tomate 200g (Próximo a vencer)",
             descripcion = "Salsa tradicional en sachet.",
             categoria = CategoriaProducto.ABARROTES_ENVASADOS,
-            urlsFotografiasActuales = emptyList(),
+            urlsFotografiasActuales = listOf("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8xO_fkgmslItmJAvcJuK0DXBu5A8i-D7ZnS7RFFab6g&s=10"),
             fechaCapturaFotoMillis = System.currentTimeMillis(),
             stockUnidadesDisponible = 40,
             montoLiquidoProveedor = 200,
@@ -318,13 +326,13 @@ class CatalogoViewModel : ViewModel() {
         iniciarMotorActualizacion()
     }
 
-    // 3. Función para cambiar el radio desde la UI (RF-08)
+    // 3. Función para cambiar el radio desde la UI
     fun cambiarRadioBusqueda(nuevoRadio: RadioBusquedaKm) {
         _radioSeleccionado.value = nuevoRadio
         aplicarFiltros()
     }
 
-    // 4. Motor de validación de tiempo real (RF-10 y RF-11)
+    // 4. Motor de validación de tiempo real
     private fun iniciarMotorActualizacion() {
         viewModelScope.launch {
             while (true) {
@@ -336,6 +344,9 @@ class CatalogoViewModel : ViewModel() {
 
     private fun aplicarFiltros() {
         val tiempoActual = System.currentTimeMillis()
+
+        // declarando query antes de llamar a la lista
+        val query = _textoBusqueda.value.trim()
 
         val lotesActualizados = lotesBase.map { lote ->
             var nuevoEstado = lote.estadoActual
@@ -352,7 +363,7 @@ class CatalogoViewModel : ViewModel() {
             val esVisiblePorEstado = (lote.estadoActual == EstadoLote.OFERTA_ACTIVA || lote.estadoActual == EstadoLote.PRECIO_NORMAL) &&
                     lote.stockUnidadesDisponible > 0
 
-            // Validación 2: Distancia GPS (Issue 3)
+            // Validación 2: Distancia GPS
             val esVisiblePorDistancia = if (latitudUsuario != null && longitudUsuario != null) {
                 val distancia = calcularDistanciaKm(
                     latitudUsuario!!, longitudUsuario!!,
@@ -363,7 +374,13 @@ class CatalogoViewModel : ViewModel() {
                 true // Si aún no hay GPS, mostramos todo por defecto
             }
 
-            esVisiblePorEstado && esVisiblePorDistancia
+            // Validación 3: Buscador de texto
+            val cumpleBusqueda = if (query.isNotEmpty()) {
+                lote.nombreProducto.contains(query, ignoreCase = true) ||
+                        lote.nombreComercio.contains(query, ignoreCase = true)
+            } else { true }
+
+            esVisiblePorEstado && esVisiblePorDistancia && cumpleBusqueda
         }
 
         _lotesVisibles.value = lotesActualizados

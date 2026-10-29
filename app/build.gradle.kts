@@ -43,12 +43,18 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
 
+    implementation(libs.play.services.location)
+
+    //dependencia para agregar imagenes mediante URL
+    implementation("io.coil-kt:coil-compose:2.5.0")
+
+
     // Room / SQLite para Persistencia Local
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
-    // Retrofit + Gson para conexión API REST con Spring Boot
+
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
 
@@ -70,5 +76,5 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
-    implementation(libs.play.services.location)
+
 }
