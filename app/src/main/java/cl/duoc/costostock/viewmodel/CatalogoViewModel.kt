@@ -7,15 +7,18 @@ import cl.duoc.costostock.model.EstadoLote
 import cl.duoc.costostock.model.LoteOferta
 import cl.duoc.costostock.model.RadioBusquedaKm
 import cl.duoc.costostock.network.RetrofitClient
+import cl.duoc.costostock.network.TransaccionesApiService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class CatalogoViewModel : ViewModel() {
+class CatalogoViewModel(
+    private val apiService: TransaccionesApiService = RetrofitClient.transaccionesApi,
+    private val iniciarCicloTiempoReal: Boolean = true
+) : ViewModel() {
 
-    // 1. Estados que leerá la interfaz (UI)
     private val _radioSeleccionado = MutableStateFlow(RadioBusquedaKm.RADIO_30_KM)
     val radioSeleccionado: StateFlow<RadioBusquedaKm> = _radioSeleccionado.asStateFlow()
 
@@ -31,26 +34,24 @@ class CatalogoViewModel : ViewModel() {
     private val _errorRed = MutableStateFlow<String?>(null)
     val errorRed: StateFlow<String?> = _errorRed.asStateFlow()
 
-    // Lista dinámica descargada desde MS-Transacciones (reemplaza la lista semilla)
     private var lotesDesdeServidor: List<LoteOferta> = emptyList()
-
-    // Coordenadas GPS del usuario (RNF-06)
     private var latitudUsuario: Double? = null
     private var longitudUsuario: Double? = null
 
     init {
         cargarCatalogoDesdeServidor()
-        iniciarMotorActualizacion()
+        if (iniciarCicloTiempoReal) {
+            iniciarMotorActualizacion()
+        }
     }
 
-    // 2. Petición asíncrona a MS-Transacciones con coordenadas GPS y radio (RF-08)
     fun cargarCatalogoDesdeServidor() {
         viewModelScope.launch {
             _cargando.value = true
             _errorRed.value = null
             try {
                 val radioKm = _radioSeleccionado.value.kilometros.toDouble()
-                val respuestaDto = RetrofitClient.transaccionesApi.obtenerCatalogo(
+                val respuestaDto = apiService.obtenerCatalogo(
                     lat = latitudUsuario,
                     lon = longitudUsuario,
                     radioKm = radioKm
@@ -58,7 +59,11 @@ class CatalogoViewModel : ViewModel() {
                 lotesDesdeServidor = respuestaDto.map { it.toDomainModel() }
                 aplicarFiltrosLocalesYContadores()
             } catch (e: Exception) {
-                Log.e("CatalogoViewModel", "Error conectando a MS-Transacciones: ${e.message}", e)
+                try {
+                    Log.e("CatalogoViewModel", "Error conectando a MS-Transacciones: ${e.message}", e)
+                } catch (_: RuntimeException) {
+                    // Evita fallo en JVM local cuando android.util.Log no está mockeado
+                }
                 _errorRed.value = "Sin conexión con el servidor de catálogo"
             } finally {
                 _cargando.value = false
@@ -66,26 +71,22 @@ class CatalogoViewModel : ViewModel() {
         }
     }
 
-    // 3. Actualización de búsqueda por texto
     fun actualizarTextoBusqueda(nuevoTexto: String) {
         _textoBusqueda.value = nuevoTexto
         aplicarFiltrosLocalesYContadores()
     }
 
-    // 4. Cambio de radio (5, 15, 30 km) -> Dispara nueva consulta geolocalizada al servidor (RF-08)
     fun cambiarRadioBusqueda(nuevoRadio: RadioBusquedaKm) {
         _radioSeleccionado.value = nuevoRadio
         cargarCatalogoDesdeServidor()
     }
 
-    // 5. Recepción de coordenadas GPS desde la UI (RNF-06) -> Consulta al servidor
     fun actualizarUbicacionUsuario(lat: Double, lon: Double) {
         latitudUsuario = lat
         longitudUsuario = lon
         cargarCatalogoDesdeServidor()
     }
 
-    // 6. Motor asíncrono (Corrutinas) que evalúa contadores regresivos en tiempo real cada 1s (RF-09)
     private fun iniciarMotorActualizacion() {
         viewModelScope.launch {
             while (true) {
@@ -95,7 +96,7 @@ class CatalogoViewModel : ViewModel() {
         }
     }
 
-    private fun aplicarFiltrosLocalesYContadores() {
+    fun aplicarFiltrosLocalesYContadores() {
         val tiempoActual = System.currentTimeMillis()
         val query = _textoBusqueda.value.trim()
 
