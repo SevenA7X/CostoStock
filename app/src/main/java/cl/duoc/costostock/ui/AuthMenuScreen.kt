@@ -23,27 +23,25 @@ fun AuthMenuScreen(navController: NavController) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Logotipo Oficial integrado
+        // Logotipo Oficial
         Image(
             painter = painterResource(id = R.drawable.logocostostockoficial),
             contentDescription = "Logo Oficial CostoStock",
             contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .fillMaxWidth(0.8f) // Ocupa el 80% del ancho para mantener proporción
+            modifier = Modifier.fillMaxWidth(0.8f)
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Texto simplificado para no redundar con el logo
         Text(
             text = "Bienvenid@",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
-        // Botón Principal: Iniciar Sesión
+        // 1. Iniciar Sesión
         Button(
             onClick = { navController.navigate("iniciar_sesion") },
             modifier = Modifier
@@ -53,9 +51,9 @@ fun AuthMenuScreen(navController: NavController) {
             Text("Iniciar Sesión", fontSize = 16.sp)
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-        // Botón Secundario: Registro
+        // 2. Crear Cuenta (Comprador)
         OutlinedButton(
             onClick = { navController.navigate("registro") },
             modifier = Modifier
@@ -65,9 +63,19 @@ fun AuthMenuScreen(navController: NavController) {
             Text("Crear Cuenta", fontSize = 16.sp)
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
-        // Vía Rápida: Invitado apuntando a su ruta correcta "ofertas"
+        // 3. Registro Exclusivo Proveedor / Comercio
+        TextButton(
+            onClick = { navController.navigate("registro_proveedor") },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("¿Tienes un negocio? Regístrate como Comercio", fontSize = 14.sp)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // 4. Modo Invitado
         TextButton(
             onClick = {
                 navController.navigate("ofertas") {

@@ -15,36 +15,36 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 class VouchersViewModel(private val voucherDao: VoucherDao) : ViewModel() {
     val vouchers: StateFlow<List<VoucherRetiro>> = voucherDao.obtenerTodosLosVouchers()
         .map { listaEntities ->
             listaEntities.map { entity ->
-                // Llenamos TODOS los parámetros exigidos por el contrato
                 VoucherRetiro(
-                    idVoucher = System.currentTimeMillis(), // Asignación simulada para cumplir contrato
-                    codigoOrdenQR = "QR-${entity.nombreProducto.take(3).uppercase()}",
+                    idVoucher = entity.idVoucher,
+                    codigoOrdenQR = entity.codigoOrdenQR,
                     idTransaccionPago = "TX-DEFAULT",
                     comprador = CompradorLigero(
-                        nombreCompleto = "Comprador Local",
+                        nombreCompleto = entity.nombreComprador,
                         correoElectronico = "correo@ejemplo.com",
                         telefonoContacto = "+56900000000"
                     ),
                     idLote = 0L,
                     nombreProducto = entity.nombreProducto,
                     cantidadUnidades = 1,
-                    subtotalPagado = 0,
+                    subtotalPagado = entity.montoTotalPagado,
                     comisionPagada = 0,
-                    montoTotalPagado = 5000, // Ajustar con el de la DB si existe
+                    montoTotalPagado = entity.montoTotalPagado,
                     idProveedor = 0L,
-                    nombreComercio = "Comercio Asociado",
-                    direccionExactaRetiro = "Dirección referencial",
+                    nombreComercio = entity.nombreComercio,
+                    direccionExactaRetiro = entity.direccionExactaRetiro,
                     coordenadasGpsRetiro = "0.0,0.0",
-                    horarioValidoRetiro = "09:00 - 18:00",
-                    kgCo2Evitado = 2.5,
+                    horarioValidoRetiro = entity.horarioValidoRetiro,
+                    kgCo2Evitado = entity.kgCo2Evitado,
                     requiereVerificacionMayorEdad = false,
                     estadoVoucher = EstadoVoucher.PAGADO_LISTO_RETIRO,
-                    fechaEmisionMillis = System.currentTimeMillis()
+                    fechaEmisionMillis = entity.fechaEmisionMillis
                 )
             }
         }
@@ -55,19 +55,34 @@ class VouchersViewModel(private val voucherDao: VoucherDao) : ViewModel() {
             voucherDao.insertarVoucher(voucher)
         }
     }
+
+    // --- NUEVA FUNCIÓN PARA EL ESCÁNER ---
+    fun validarYEntregarVoucher(codigoQR: String, onExito: () -> Unit) {
+        viewModelScope.launch {
+            val voucherEncontrado = vouchers.value.find { it.codigoOrdenQR == codigoQR }
+            if (voucherEncontrado != null) {
+                onExito()
+            }
+        }
+    }
 }
 
-class ImpactoViewModel(private val impactoDao: ImpactoDao) : ViewModel() {
-    val metricas: StateFlow<ResumenImpactoMetricas?> = impactoDao.obtenerMetricas()
-        .map { entity ->
-            entity?.let {
-                ResumenImpactoMetricas(
-                    totalKgCo2Evitado = it.totalKgCo2Evitado,
-                    equivalenciaArbolesPlantados = it.equivalenciaArbolesPlantados,
-                    totalLotesVendidosOComprados = it.totalLotesVendidosOComprados,
-                    montoLiquidoTotalAcumulado = 0 // Parámetro del contrato
-                )
-            }
+class ImpactoViewModel(private val voucherDao: VoucherDao) : ViewModel() {
+    companion object {
+        const val KG_CO2_POR_ARBOL = 21.0
+    }
+
+    val metricas: StateFlow<ResumenImpactoMetricas?> = voucherDao.obtenerTodosLosVouchers()
+        .map { listaEntities ->
+            val totalCo2 = listaEntities.sumOf { it.kgCo2Evitado }
+            val totalLotes = listaEntities.size
+
+            ResumenImpactoMetricas(
+                totalKgCo2Evitado = totalCo2,
+                equivalenciaArbolesPlantados = (totalCo2 / KG_CO2_POR_ARBOL).roundToInt(),
+                totalLotesVendidosOComprados = totalLotes,
+                montoLiquidoTotalAcumulado = listaEntities.sumOf { it.montoTotalPagado }
+            )
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 }
@@ -83,7 +98,7 @@ class ModulosViewModelFactory(
         }
         if (modelClass.isAssignableFrom(ImpactoViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return ImpactoViewModel(impactoDao) as T
+            return ImpactoViewModel(voucherDao) as T
         }
         throw IllegalArgumentException("Clase ViewModel desconocida")
     }

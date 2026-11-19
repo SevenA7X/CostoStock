@@ -37,7 +37,7 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.compose.material.icons.extended)
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
 
     // ViewModel y Navegación para Jetpack Compose MVVM
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -48,12 +48,10 @@ dependencies {
     //dependencia para agregar imagenes mediante URL
     implementation("io.coil-kt:coil-compose:2.5.0")
 
-
     // Room / SQLite para Persistencia Local
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
-
 
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
@@ -76,5 +74,17 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
+    // --- NUEVAS LIBRERÍAS PARA EL MÓDULO 3 ---
 
+    // CameraX (Para controlar la cámara del proveedor)
+    val camerax_version = "1.3.1"
+    implementation("androidx.camera:camera-camera2:$camerax_version")
+    implementation("androidx.camera:camera-lifecycle:$camerax_version")
+    implementation("androidx.camera:camera-view:$camerax_version")
+
+    // ML Kit Barcode Scanning (Para reconocer el QR al instante)
+    implementation("com.google.mlkit:barcode-scanning:17.2.0")
+
+    // ZXing (Para dibujar el QR real en la pantalla del comprador)
+    implementation("com.google.zxing:core:3.5.2")
 }

@@ -14,13 +14,12 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class CatalogoViewModel : ViewModel() {
 
-    // 1. Estados que leerá la interfaz (UI)
     private val _radioSeleccionado = MutableStateFlow(RadioBusquedaKm.RADIO_30_KM)
     val radioSeleccionado: StateFlow<RadioBusquedaKm> = _radioSeleccionado.asStateFlow()
 
     private val _lotesVisibles = MutableStateFlow<List<LoteOferta>>(emptyList())
     val lotesVisibles: StateFlow<List<LoteOferta>> = _lotesVisibles.asStateFlow()
-    // Estado para el buscador de texto
+
     private val _textoBusqueda = MutableStateFlow("")
     val textoBusqueda: StateFlow<String> = _textoBusqueda.asStateFlow()
 
@@ -28,8 +27,7 @@ class CatalogoViewModel : ViewModel() {
         _textoBusqueda.value = nuevoTexto
         aplicarFiltros()
     }
-    // 2. Base de datos de prueba (Mock) ajustada a sus 5 categorías
-    // 2. Base de datos de prueba (Mock) con imágenes optimizadas para Coil
+
     private val lotesBase = listOf(
         LoteOferta(
             idLote = 1,
@@ -326,44 +324,36 @@ class CatalogoViewModel : ViewModel() {
         iniciarMotorActualizacion()
     }
 
-    // 3. Función para cambiar el radio desde la UI
     fun cambiarRadioBusqueda(nuevoRadio: RadioBusquedaKm) {
         _radioSeleccionado.value = nuevoRadio
         aplicarFiltros()
     }
 
-    // 4. Motor de validación de tiempo real
     private fun iniciarMotorActualizacion() {
         viewModelScope.launch {
             while (true) {
                 aplicarFiltros()
-                delay(1000) // Se ejecuta cada 1 segundo para los contadores
+                delay(1000)
             }
         }
     }
 
     private fun aplicarFiltros() {
         val tiempoActual = System.currentTimeMillis()
-
-        // declarando query antes de llamar a la lista
         val query = _textoBusqueda.value.trim()
 
         val lotesActualizados = lotesBase.map { lote ->
             var nuevoEstado = lote.estadoActual
-
             if (tiempoActual >= lote.fechaCaducidadMillis) {
                 nuevoEstado = EstadoLote.CADUCADO_BLOQUEADO
             } else if (tiempoActual >= lote.fechaHoraFinOfertaMillis) {
                 nuevoEstado = EstadoLote.PRECIO_NORMAL
             }
-
             lote.copy(estadoActual = nuevoEstado)
         }.filter { lote ->
-            // Validación 1: Estado y Stock
             val esVisiblePorEstado = (lote.estadoActual == EstadoLote.OFERTA_ACTIVA || lote.estadoActual == EstadoLote.PRECIO_NORMAL) &&
                     lote.stockUnidadesDisponible > 0
 
-            // Validación 2: Distancia GPS
             val esVisiblePorDistancia = if (latitudUsuario != null && longitudUsuario != null) {
                 val distancia = calcularDistanciaKm(
                     latitudUsuario!!, longitudUsuario!!,
@@ -371,10 +361,9 @@ class CatalogoViewModel : ViewModel() {
                 )
                 distancia <= _radioSeleccionado.value.kilometros
             } else {
-                true // Si aún no hay GPS, mostramos todo por defecto
+                true
             }
 
-            // Validación 3: Buscador de texto
             val cumpleBusqueda = if (query.isNotEmpty()) {
                 lote.nombreProducto.contains(query, ignoreCase = true) ||
                         lote.nombreComercio.contains(query, ignoreCase = true)
@@ -385,18 +374,16 @@ class CatalogoViewModel : ViewModel() {
 
         _lotesVisibles.value = lotesActualizados
     }
-    // Variables para almacenar la ubicación del teléfono
+
     private var latitudUsuario: Double? = null
     private var longitudUsuario: Double? = null
 
-    // Función que recibirá las coordenadas desde la UI
     fun actualizarUbicacionUsuario(lat: Double, lon: Double) {
         latitudUsuario = lat
         longitudUsuario = lon
         aplicarFiltros()
     }
 
-    // Fórmula de Haversine para calcular distancia real en kilómetros
     private fun calcularDistanciaKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val radioTierra = 6371.0
         val dLat = Math.toRadians(lat2 - lat1)

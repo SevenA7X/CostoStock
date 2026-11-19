@@ -3,7 +3,9 @@ package cl.duoc.costostock.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -41,9 +43,11 @@ fun DetalleOfertaScreen(viewModel: CatalogoViewModel, idLoteSeleccionado: Long, 
     }
 
     // 4. Estructura visual de los detalles.
+    // AQUÍ ESTÁ LA MAGIA: Agregamos verticalScroll para que la pantalla pueda deslizarse
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
         // --- INICIO IMAGEN DESTACADA ---
@@ -148,7 +152,8 @@ fun DetalleOfertaScreen(viewModel: CatalogoViewModel, idLoteSeleccionado: Long, 
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f)) // Empuja el botón hacia el fondo de la pantalla.
+        // Reemplazamos el weight(1f) por un espacio fijo para que no falle el Scroll
+        Spacer(modifier = Modifier.height(32.dp))
 
         // 7. Botón de acción principal.
         Button(
@@ -156,9 +161,18 @@ fun DetalleOfertaScreen(viewModel: CatalogoViewModel, idLoteSeleccionado: Long, 
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)), // Naranja para que destaque
             shape = RoundedCornerShape(8.dp)
         ) {
-            Text(text = "Reservar Oferta", style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = "Reservar Oferta",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White
+            )
         }
+
+        // SOLUCIÓN DEFINITIVA:
+        // Colchón de espacio invisible al final de la pantalla para engañar a la barra inferior
+        Spacer(modifier = Modifier.height(100.dp))
     }
 }

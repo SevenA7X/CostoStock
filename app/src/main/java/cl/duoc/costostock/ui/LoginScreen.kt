@@ -2,6 +2,7 @@ package cl.duoc.costostock.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -36,6 +39,7 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf("") }
+    var esProveedor by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -73,7 +77,24 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
+
+            // Opción de ingreso para Comercio / Proveedor
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = esProveedor,
+                    onCheckedChange = { esProveedor = it }
+                )
+                Text(
+                    text = "Ingresar como Comercio / Proveedor",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
 
             if (error.isNotEmpty()) {
                 Text(error, color = MaterialTheme.colorScheme.error)
@@ -88,8 +109,9 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
                         error = "La contraseña debe tener al menos 3 caracteres"
                     } else if (viewModel.login(email.trim(), password)) {
                         error = ""
-                        // Navega al catálogo y elimina el menú de autenticación de la pila
-                        navController.navigate("ofertas") {
+                        // Redirige al panel correspondiente según el perfil seleccionado
+                        val rutaDestino = if (esProveedor) "panel_proveedor" else "ofertas"
+                        navController.navigate(rutaDestino) {
                             popUpTo("auth_menu") { inclusive = true }
                         }
                     } else {
@@ -100,6 +122,8 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel) {
             ) {
                 Text("Ingresar")
             }
+
+            Spacer(Modifier.height(8.dp))
 
             TextButton(onClick = { navController.navigate("registro") }) {
                 Text("¿No tienes Cuenta? Regístrate Aquí")

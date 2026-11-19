@@ -225,7 +225,7 @@ fun CarritoCheckoutScreen(
                         procesandoPago = false
                         pagoCompletado = true
 
-                        // Creación e inserción del voucher en SQLite
+                        // Creación e inserción del voucher en SQLite con DATOS REALES DEL CLIENTE
                         val nuevoVoucher = VoucherEntity(
                             codigoOrdenQR = "QR-${System.currentTimeMillis()}",
                             nombreProducto = "Pack de Productos CostoStock",
@@ -235,30 +235,27 @@ fun CarritoCheckoutScreen(
                             estadoVoucher = "VÁLIDO",
                             kgCo2Evitado = 0.5,
                             fechaEmisionMillis = System.currentTimeMillis(),
-                            nombreComprador = "Mario Quintero", // Simulación del nombre del usuario activo
-                            montoTotalPagado = 5000 // Simulación del total del carrito
+                            nombreComprador = state.compradorNombre, // <-- Usando nombre real
+                            montoTotalPagado = totalPagar            // <-- Usando total real
                         )
                         voucherDao.insertarVoucher(nuevoVoucher)
 
                         Toast.makeText(contexto, "¡Reserva y Pago exitoso!", Toast.LENGTH_LONG).show()
 
-                        // Armamos el objeto oficial del contrato
                         val alertaOficial = AlertaNotificacion(
                             idNotificacion = System.currentTimeMillis(),
-                            idLoteAsociado = 0L, // 0L por defecto o el ID del lote real si lo tienes en el state
+                            idLoteAsociado = 0L,
                             titulo = "¡Compra Exitosa en CostoStock!",
                             mensaje = "Tu voucher está listo y ayudaste a reducir emisiones de CO2. 🌱",
-                            tipo = TipoNotificacionPush.OFERTA_CERCANA_GPS, // Usamos un enum oficial
+                            tipo = TipoNotificacionPush.OFERTA_CERCANA_GPS,
                             timestampEnvioMillis = System.currentTimeMillis()
                         )
 
-                        // Disparamos la notificación pasando el objeto completo
                         gestorNotificaciones.mostrarNotificacion(alertaOficial)
 
                         delay(1000L)
                         onPagoExitoso()
 
-                        // LÍNEAS NUEVAS: Navegación a vouchers y limpieza de historial
                         navController.navigate("vouchers") {
                             popUpTo("ofertas") { inclusive = false }
                         }

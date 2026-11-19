@@ -52,7 +52,6 @@ class CarritoCheckoutViewModel : ViewModel() {
         }
     }
 
-
     fun onNombreChanged(nuevoNombre: String) {
         val error = validarNombre(nuevoNombre)
         _uiState.value = _uiState.value.copy(

@@ -1,214 +1,308 @@
 package cl.duoc.costostock.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateIntAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import android.graphics.Bitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import cl.duoc.costostock.model.CategoriaProducto
 import cl.duoc.costostock.viewmodel.CampoLote
 import cl.duoc.costostock.viewmodel.ProveedorViewModel
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PublicarLoteScreen(
     navController: NavController,
-    viewModel: ProveedorViewModel = viewModel()) {
+    viewModel: ProveedorViewModel
+) {
     val state by viewModel.publicarState.collectAsState()
+
+    // Estado para expandir o contraer el menú de categorías
+    var categoriaExpanded by remember { mutableStateOf(false) }
+
+    // Lanzador para abrir la cámara y capturar la foto (devuelve un Bitmap)
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        if (bitmap != null) {
+            viewModel.onFotoCapturada(bitmap)
+        }
+    }
+
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Publicar lote") }) }) { padding ->
-        Column(modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            CampoTexto(
-                etiqueta = "Nombre del producto",
-                valor = state.nombreProducto,
-                onCambio = viewModel::onNombreChange,
-                error = state.errores[CampoLote.NOMBRE])
-
-            CampoTexto(
-            etiqueta = "Descripción",
-            valor = state.descripcion,
-            onCambio = viewModel::onDescripcionChange,
-            error = state.errores[CampoLote.DESCRIPCION],
-            unaLinea = false)
-
-            SelectorCategoria(
-                seleccionada = state.categoria,
-                onSeleccion = viewModel::onCategoriaChange,
-                error = state.errores[CampoLote.CATEGORIA])
-
-            CampoTexto(
-                etiqueta = "Stock (unidades)",
-                valor = state.stockTexto,
-                onCambio = viewModel::onStockChange,
-                error = state.errores[CampoLote.STOCK],
-                numerico = true )
-
-            CampoTexto(
-                etiqueta = "Monto líquido por unidad (CLP)",
-                valor = state.montoLiquidoTexto,
-                onCambio = viewModel::onMontoChange,
-                error = state.errores[CampoLote.MONTO],
-                numerico = true)
-
-            CampoTexto(
-                etiqueta = "Precio normal sin descuento (CLP)",
-                valor = state.precioNormalTexto,
-                onCambio = viewModel::onPrecioNormalChange,
-                error = state.errores[CampoLote.PRECIO_NORMAL],
-                numerico = true)
-
-            CampoTexto(
-                etiqueta = "Fecha de caducidad (dd/mm/aaaa)",
-                valor = state.caducidadTexto,
-                onCambio = viewModel::onCaducidadChange,
-                error = state.errores[CampoLote.CADUCIDAD])
-
-            CampoTexto(
-                etiqueta = "Vigencia de la promoción (horas)",
-                valor = state.vigenciaHorasTexto,
-                onCambio = viewModel::onVigenciaChange,
-                error = state.errores[CampoLote.VIGENCIA],
-                numerico = true)
-
-            CapturaFotoLote(
-                foto = state.fotoCapturada,
-                error = state.errores[CampoLote.FOTO],
-                onFotoCapturada = viewModel::onFotoCapturada
+        topBar = {
+            TopAppBar(
+                title = { Text("Publicar Lote", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver al Panel"
+                        )
+                    }
+                }
             )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            OutlinedTextField(
+                value = state.nombreProducto,
+                onValueChange = { viewModel.onNombreChange(it) },
+                label = { Text("Nombre del producto") },
+                isError = state.errores.containsKey(CampoLote.NOMBRE),
+                supportingText = { state.errores[CampoLote.NOMBRE]?.let { Text(it) } },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(4.dp))
 
-            AnimatedVisibility(
-                visible = state.precioOfertaFinal > 0,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()) { Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Resumen de precios", fontWeight = FontWeight.Bold)
-                        FilaPrecio("Tú recibes (líquido)", state.montoLiquidoTexto.toIntOrNull() ?: 0)
-                        FilaPrecio("Comisión CostoStock (10%)", state.comision)
-                        FilaPrecio("Precio final de oferta", state.precioOfertaFinal, destacado = true) } } }
+            OutlinedTextField(
+                value = state.descripcion,
+                onValueChange = { viewModel.onDescripcionChange(it) },
+                label = { Text("Descripción") },
+                isError = state.errores.containsKey(CampoLote.DESCRIPCION),
+                supportingText = { state.errores[CampoLote.DESCRIPCION]?.let { Text(it) } },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // MENÚ DESPLEGABLE DE CATEGORÍAS REAL
+            ExposedDropdownMenuBox(
+                expanded = categoriaExpanded,
+                onExpandedChange = { categoriaExpanded = it }
+            ) {
+                OutlinedTextField(
+                    value = state.categoria?.name?.replace("_", " ") ?: "Seleccione una...",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Categoría") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoriaExpanded) },
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                    isError = state.errores.containsKey(CampoLote.CATEGORIA),
+                    supportingText = { state.errores[CampoLote.CATEGORIA]?.let { Text(it) } }
+                )
+                ExposedDropdownMenu(
+                    expanded = categoriaExpanded,
+                    onDismissRequest = { categoriaExpanded = false }
+                ) {
+                    CategoriaProducto.entries.forEach { categoria ->
+                        DropdownMenuItem(
+                            text = { Text(categoria.name.replace("_", " ")) },
+                            onClick = {
+                                viewModel.onCategoriaChange(categoria)
+                                categoriaExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+
+            OutlinedTextField(
+                value = state.stockTexto,
+                onValueChange = { viewModel.onStockChange(it) },
+                label = { Text("Stock (unidades)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                isError = state.errores.containsKey(CampoLote.STOCK),
+                supportingText = { state.errores[CampoLote.STOCK]?.let { Text(it) } },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+
+            OutlinedTextField(
+                value = state.montoLiquidoTexto,
+                onValueChange = { viewModel.onMontoChange(it) },
+                label = { Text("Monto líquido por unidad (CLP)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                isError = state.errores.containsKey(CampoLote.MONTO),
+                supportingText = { state.errores[CampoLote.MONTO]?.let { Text(it) } },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+
+            OutlinedTextField(
+                value = state.precioNormalTexto,
+                onValueChange = { viewModel.onPrecioNormalChange(it) },
+                label = { Text("Precio normal sin descuento (CLP)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                isError = state.errores.containsKey(CampoLote.PRECIO_NORMAL),
+                supportingText = { state.errores[CampoLote.PRECIO_NORMAL]?.let { Text(it) } },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+
+            OutlinedTextField(
+                value = state.caducidadTexto,
+                onValueChange = { viewModel.onCaducidadChange(it) },
+                label = { Text("Fecha de caducidad (dd/mm/aaaa)") },
+                isError = state.errores.containsKey(CampoLote.CADUCIDAD),
+                supportingText = { state.errores[CampoLote.CADUCIDAD]?.let { Text(it) } },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+
+            OutlinedTextField(
+                value = state.vigenciaHorasTexto,
+                onValueChange = { viewModel.onVigenciaChange(it) },
+                label = { Text("Vigencia de la promoción (horas)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                isError = state.errores.containsKey(CampoLote.VIGENCIA),
+                supportingText = { state.errores[CampoLote.VIGENCIA]?.let { Text(it) } },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // BOTÓN FOTO CONECTADO A LA CÁMARA
+            OutlinedButton(
+                onClick = { cameraLauncher.launch(null) }, // Abre la cámara
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Icon(Icons.Default.PhotoCamera, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                // Cambia el texto si ya se capturó una foto
+                Text(if (state.fotoCapturada != null) "Foto capturada. ¿Cambiar?" else "Tomar Foto")
+            }
+            if (state.errores.containsKey(CampoLote.FOTO)) {
+                Text(
+                    text = state.errores[CampoLote.FOTO]!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Resumen de precios",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Tú recibes (líquido)")
+                        Text("$${if(state.montoLiquidoTexto.isEmpty()) "0" else state.montoLiquidoTexto}", fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Comisión CostoStock (10%)")
+                        Text("$${state.comision}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Precio final de oferta", fontWeight = FontWeight.Bold)
+                        Text("$${state.precioOfertaFinal}", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF2E7D32))
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             Button(
                 onClick = { viewModel.publicarLote() },
-                modifier = Modifier.fillMaxWidth()) { Text("Publicar lote") }
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("Publicar Lote", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
 
-            AnimatedVisibility(visible = state.publicado, enter = fadeIn() + expandVertically()) {
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)) { Icon(
-                            Icons.Filled.CheckCircle,
-                        contentDescription = "Lote publicado",
-                        tint = Color(0xFF2E7D32))
-                        Text("¡Lote publicado con éxito!", fontWeight = FontWeight.Bold)
-                        Row {
-                            TextButton(onClick = { viewModel.reiniciarFormulario() }) { Text("Publicar otro") }
+            if (state.publicado) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = Color(0xFF2E7D32),
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "¡Lote publicado con éxito!",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            TextButton(onClick = { viewModel.reiniciarFormulario() }) {
+                                Text("Publicar otro")
+                            }
                             TextButton(onClick = { navController.navigate("validar_voucher") }) {
-                                Text("Validar voucher") } } } } } } } }
-
-@Composable
-private fun CampoTexto(
-    etiqueta: String,
-    valor: String,
-    onCambio: (String) -> Unit,
-    error: String?,
-    numerico: Boolean = false,
-    unaLinea: Boolean = true) {
-    OutlinedTextField(
-        value = valor,
-        onValueChange = onCambio,
-        label = { Text(etiqueta) },
-        isError = error != null,
-        singleLine = unaLinea,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = if (numerico) KeyboardType.Number else KeyboardType.Text
-        ),
-        trailingIcon = {
-            if (error != null) {
-                Icon(
-                    Icons.Filled.Warning,
-                    contentDescription = "Error",
-                    tint = MaterialTheme.colorScheme.error
-                )
+                                Text("Validar voucher")
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Button(
+                            onClick = { navController.navigate("panel_proveedor") { popUpTo("panel_proveedor") { inclusive = true } } },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text("Volver al Panel de Comercio")
+                        }
+                    }
+                }
             }
-        },
-        supportingText = error?.let { mensaje -> { Text(mensaje) } },
-        modifier = Modifier.fillMaxWidth() ) }
-
-@Composable
-private fun SelectorCategoria(
-    seleccionada: CategoriaProducto?,
-    onSeleccion: (CategoriaProducto) -> Unit,
-    error: String?) {
-    var expandido by remember { mutableStateOf(false) }
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Box {
-            OutlinedButton(onClick = { expandido = true }, modifier = Modifier.fillMaxWidth()) {
-                Text(seleccionada?.let { etiquetaCategoria(it) } ?: "Seleccione una categoría")
-            }
-            DropdownMenu(expanded = expandido, onDismissRequest = { expandido = false }) {
-                CategoriaProducto.entries.forEach { categoria ->
-                    DropdownMenuItem(
-                        text = { Text(etiquetaCategoria(categoria)) },
-                        onClick = {
-                            onSeleccion(categoria)
-                            expandido = false }) } } }
-        error?.let { MensajeError(it) } } }
-@Composable
-private fun FilaPrecio(etiqueta: String, valor: Int, destacado: Boolean = false) {
-    val animado by animateIntAsState(targetValue = valor, animationSpec = tween(500), label = "precio")
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(etiqueta, fontWeight = if (destacado) FontWeight.Bold else FontWeight.Normal)
-        Text(formatoPesos(animado), fontWeight = if (destacado) FontWeight.Bold else FontWeight.Normal)
-    } }
-private fun etiquetaCategoria(c: CategoriaProducto): String {
-    val base = c.name.lowercase().replace('_', ' ').replaceFirstChar { it.uppercase() }
-    return if (c.requiereVerificacionEdad) "$base (+18)" else base }
-private fun formatoPesos(n: Int): String =
-    "$" + String.format(Locale.forLanguageTag("es-CL"), "%,d", n)
+            Spacer(modifier = Modifier.height(40.dp))
+        }
+    }
+}

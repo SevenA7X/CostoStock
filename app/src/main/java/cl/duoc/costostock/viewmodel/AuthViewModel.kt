@@ -8,19 +8,18 @@ class AuthViewModel : ViewModel() {
     private val usuariosRegistrados = mutableMapOf<String, String>()
 
     init {
-        // Usuario administrador por defecto para agilizar sus pruebas
+        // Usuario administrador por defecto para pruebas
         usuariosRegistrados["test@duocuc.cl"] = "123456"
     }
 
     /**
-     * Intenta registrar un nuevo usuario en el sistema.
-     * @return true si el registro es exitoso, false si el correo ya estaba registrado.
+     * Registra un usuario con correo y contraseña.
      */
     fun registrarUsuario(email: String, contrasena: String): Boolean {
         val correoNormalizado = email.trim().lowercase()
 
         if (usuariosRegistrados.containsKey(correoNormalizado)) {
-            return false // Rechaza el registro: El usuario ya existe
+            return false // El usuario ya existe
         }
 
         usuariosRegistrados[correoNormalizado] = contrasena
@@ -28,8 +27,21 @@ class AuthViewModel : ViewModel() {
     }
 
     /**
+     * Sobrecarga con 2 parámetros para llamadas a 'registrar'.
+     */
+    fun registrar(email: String, contrasena: String): Boolean {
+        return registrarUsuario(email, contrasena)
+    }
+
+    /**
+     * Sobrecarga con 3 parámetros (Nombre/Razón Social, Correo, Contraseña) para llamadas desde registro.
+     */
+    fun registrar(nombreORazonSocial: String, email: String, contrasena: String): Boolean {
+        return registrarUsuario(email, contrasena)
+    }
+
+    /**
      * Valida las credenciales ingresadas contra los registros existentes.
-     * @return true si el correo existe y la contraseña coincide.
      */
     fun login(email: String, contrasena: String): Boolean {
         val correoNormalizado = email.trim().lowercase()
